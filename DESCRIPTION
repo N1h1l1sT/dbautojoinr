@@ -1,0 +1,30 @@
+Type: Package
+Package: dbautojoinr
+Title: Automatic Joining of SQL Tables
+Version: 0.1.0.9000
+Authors@R: c(
+	person("Ioannis", "Mamalikidis", email = "Giannis_Mamalikidis@msn.com", role = c("aut", "cre")),
+	person("Anestis", "Fachantidis", role = "aut")
+	)
+Description: Automagically Joins the Tables of any Database into 1 Table or the Main Tables as given by the relationships (i.e. Table with Foreign Keys) Only Keeping Fields that the User Wants.
+URL: https://www.NihilisTsLab.com
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Depends:
+	R (>= 3.4.4),
+	odbc,
+	datamodelr,
+	DiagrammeR,
+	DBI,
+	stringi,
+	stringr,
+	tibble,
+	dplyr,
+	dbplyr,
+	magrittr,
+	purrr,
+	tractor.base,
+	shiny,
+	rhandsontable
+RoxygenNote: 6.1.0.9000
