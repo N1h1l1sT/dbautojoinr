@@ -177,5 +177,5 @@ joint_table_Without_extended_joins <-
 ```
 Arguments:
   * **db_TablesForColumnRenaming**: A string Vector. The names of the tables that need renaming
-  * **db_ColumnsOldNamesToNewNames**: A names List. Names correspond to the Table names, and the vectors inside will be used to renamed SQL Columns starting with db_ColumnsOldNamesToNewNames[i][j] to db_ColumnsOldNamesToNewNames[i][j+1] with j going from 1 to length of db_ColumnsOldNamesToNewNames[i] by 2
+  * **db_ColumnsOldNamesToNewNames**: A names List. Names correspond to the Table names, and the vectors inside will be used to renamed SQL Columns starting with `db_ColumnsOldNamesToNewNames[i][j]` to `db_ColumnsOldNamesToNewNames[i][j+1]` with j going from 1 to length of `db_ColumnsOldNamesToNewNames[i]` by 2
 
