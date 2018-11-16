@@ -1,11 +1,8 @@
----
-title: "dbautojoinr"
-output: github_document
----
+# dbautojoinr
 
 ## Installation
 
-```{r }
+```r
 if (!("devtools" %in% rownames(installed.packages()))) install.packages("devtools", repos = "https://cloud.r-project.org")
 library(devtools)
 install_github("N1h1l1sT/dbautojoinr")
@@ -20,7 +17,7 @@ The whole process revolves around the db_fields DF, which can be configured by t
 
 #### Initialisation when the Relationships actually exist on the SQL Database with FOREIGN KEY constraints
 
-```{r }
+```r
 library(dbautojoinr)
 
 #If the file exists, it's read and the db_fields object is created by it.
@@ -45,7 +42,7 @@ db_fields <- initialise_return_db_fields(csv_path = db_fields_path,
 
 Please notice that Foreign Keys are always on the left hand side, whilst IDs are always on the right hand side.
 
-```{r }
+```r
 library(dbautojoinr)
 db_fields_path <- paste0(getwd(), "/db_fields.csv")
 
@@ -80,7 +77,7 @@ Depending on what you want to achieve, there are different levels of joining tha
 
 #### Getting the main_joint_tables
 
-```{r }
+```r
 db_forced_rel <- NULL #We don't want to Force any relationships to create a 1-JointTable, so db_forced_rel is NULL
 
 main_joint_tables <-
@@ -94,18 +91,18 @@ main_joint_tables <-
 
 ```
 Arguments:
-  * db_fields: A DF with columns: "Include, KeyType, Table, Column, Type, RelationshipWithTable, RelationshipWithColumn, Transformation, Comment" about the User Selected fields and Relationships
-  * db_forced_rel: A Named String Vector. The vector names MUST point to the main table to be used for the 1-Joint-Table as its LHS
-  * DeselectKeysIfIncludeFalse: A Boolean. Must be FALSE if we need to continue to 1-Joint-Table, otherwise needed Identity and Foreign keys might be missing
-  * con: A dbConnect {DBI} connection object to a SQL Database
-  * Verbose: A Boolean. Verbose = TRUE will output the consecutive joins as they happen
-  * get_sql_query: A Boolean. get_sql_query = TRUE will create/edit the db$sql_main_joint_tables that output the SQL Code for the tables
+  * **db_fields**: A DF with columns: "Include, KeyType, Table, Column, Type, RelationshipWithTable, RelationshipWithColumn, Transformation, Comment" about the User Selected fields and Relationships
+  * **db_forced_rel**: A Named String Vector. The vector names MUST point to the main table to be used for the 1-Joint-Table as its LHS
+  * **DeselectKeysIfIncludeFalse**: A Boolean. Must be FALSE if we need to continue to 1-Joint-Table, otherwise needed Identity and Foreign keys might be missing
+  * **con**: A dbConnect {DBI} connection object to a SQL Database
+  * **Verbose**: A Boolean. Verbose = TRUE will output the consecutive joins as they happen
+  * **get_sql_query**: A Boolean. get_sql_query = TRUE will create/edit the db$sql_main_joint_tables that output the SQL Code for the tables
 
 #### Getting the joint_table_Without_extended_joins
 
 ###### _From hereinafter we need to have configured the db_forced_rel variable with the forced relationships that we want to impose in order to join the Main tables into 1 table_
 
-```{r }
+```r
 #Assumptions: Database is in Canonical Form, No two columns have the same name (Usual good practice in Databases)
 db_forced_rel <-
   c(                #The LHS of the Relationships MUST be Columns from the main table to be used for the 1-Joint-Table
@@ -135,7 +132,7 @@ joint_table_Without_extended_joins <-
 
 ###### _From hereinafter we need to have configured the db_TablesForColumnRenaming and db_ColumnsOldNamesToNewNames variables with the renaming schema so that when the same table is joined with different Main tables, the column names change to reflect the different meaning_
 
-```{r }
+```r
 #Assumptions: Database is in Canonical Form, No two columns have the same name (Usual good practice in Databases)
 db_forced_rel <-
   c(                #The LHS of the Relationships MUST be Columns from the main table to be used for the 1-Joint-Table
@@ -179,6 +176,6 @@ joint_table_Without_extended_joins <-
 
 ```
 Arguments:
-  * db_TablesForColumnRenaming A string Vector. The names of the tables that need renaming
-  * db_ColumnsOldNamesToNewNames A names List. Names correspond to the Table names, and the vectors inside will be used to renamed SQL Columns starting with db_ColumnsOldNamesToNewNames[i][j] to db_ColumnsOldNamesToNewNames[i][j+1] with j going from 1 to length of db_ColumnsOldNamesToNewNames[i] by 2
+  * **db_TablesForColumnRenaming**: A string Vector. The names of the tables that need renaming
+  * **db_ColumnsOldNamesToNewNames**: A names List. Names correspond to the Table names, and the vectors inside will be used to renamed SQL Columns starting with db_ColumnsOldNamesToNewNames[i][j] to db_ColumnsOldNamesToNewNames[i][j+1] with j going from 1 to length of db_ColumnsOldNamesToNewNames[i] by 2
 
