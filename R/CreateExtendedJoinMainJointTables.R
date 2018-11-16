@@ -50,7 +50,7 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, con, db_
   ### For example, if an employee is employed by a certain Building (his Main Building) but also works ###
   ### on others too. So DIM_Employee will have a BuildingID AND FACT_Work will have a BuildingID too   ###
   ########################################################################################################
-  .GlobalEnv$NeededRenamedColNames <- NULL    #Used in order to select() only Include==Yes at the end of 1-Joint-Table
+  db$NeededRenamedColNames <- NULL    #Used in order to select() only Include==Yes at the end of 1-Joint-Table
   OldNamesToForceJoin <- NULL      #Used in order to Join Renamed Columns with foreign tables as well #NROW = NROW(db_forced_rel)
   NewNamesToForceJoin <- NULL      #Used in order to Join Renamed Columns with foreign tables as well #NROW = NROW(db_forced_rel)
   OldAndNewTabToForceJoin <- NULL  #Used in order to Join Renamed Columns with foreign tables as well #NROW = NROW(db_forced_rel)
@@ -74,7 +74,7 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, con, db_
       }
       
       iNeededRenamedColNames <- OldColNames %in% (CurColNames[CurColNames %in% ColsFromDbFields])
-      .GlobalEnv$NeededRenamedColNames <- c(.GlobalEnv$NeededRenamedColNames, NewColNames[iNeededRenamedColNames])
+      db$NeededRenamedColNames <- c(db$NeededRenamedColNames, NewColNames[iNeededRenamedColNames])
       
       iNamesToForceJoin <- OldColNames %in% as.character(db_forced_rel)
       OldNamesToForceJoin <- c(OldNamesToForceJoin, OldColNames[iNamesToForceJoin])
@@ -116,7 +116,7 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, con, db_
           }
           
           iNeededRenamedColNames <- OldColNames %in% (TabColNames[TabColNames %in% ColsFromDbFields])
-          .GlobalEnv$NeededRenamedColNames <- c(.GlobalEnv$NeededRenamedColNames, NewColNames[iNeededRenamedColNames])
+          db$NeededRenamedColNames <- c(db$NeededRenamedColNames, NewColNames[iNeededRenamedColNames])
           
           #Renaming the rest of the names that doesn't have a Renaming Schema
           iColsNeedingChange <- (!startsWith(NewRenamedColNames, OldAndNewNames[[k + 1]])) %>% which()
@@ -127,17 +127,17 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, con, db_
             }
           }
           iNeededRenamedColNames <- OldColNames %in% (TabColNames[TabColNames %in% ColsFromDbFields])
-          .GlobalEnv$NeededRenamedColNames <- c(.GlobalEnv$NeededRenamedColNames, NewRenamedColNames[iNeededRenamedColNames])
+          db$NeededRenamedColNames <- c(db$NeededRenamedColNames, NewRenamedColNames[iNeededRenamedColNames])
         }
         
       } else {
         NewRenamedColNames <- paste0(OldAndNewNames[[2]], NewRenamedColNames)
         
         iNeededRenamedColNames <- OldColNames %in% (TabColNames[TabColNames %in% ColsFromDbFields])
-        .GlobalEnv$NeededRenamedColNames <- c(.GlobalEnv$NeededRenamedColNames, NewRenamedColNames[iNeededRenamedColNames])
+        db$NeededRenamedColNames <- c(db$NeededRenamedColNames, NewRenamedColNames[iNeededRenamedColNames])
       }
       
-      .GlobalEnv$NeededRenamedColNames %<>%
+      db$NeededRenamedColNames %<>%
         unique()
       
       #Doesn't need a special SELECT because if uneeded columns existed, they would have already been removed in the main_joint_tables creation function.

@@ -135,7 +135,7 @@ CreateOneJointTable <- function(main_joint_tables, db_fields, con, db_forced_rel
     included_cols <-
       c(
         ColsFromDbFields[ColsFromDbFields %in% colnames(joint_table)],
-        .GlobalEnv$NeededRenamedColNames[.GlobalEnv$NeededRenamedColNames %in% colnames(joint_table)]
+        db$NeededRenamedColNames[db$NeededRenamedColNames %in% colnames(joint_table)]
       ) %>% unique()
     
     if (NROW(colnames(joint_table)) != NROW(included_cols) || any(colnames(joint_table) != included_cols)) {

@@ -1,5 +1,5 @@
 #' Plots the ER Digramme for the SQL Database
-#' 
+#'
 #' Shows a plot of the ER diagramme for the Database
 #' @param DataModel A data model object as given by the datamodelr Library/Package
 #' @param GraphDirection A string. Valid values are given by the rankdir parameter of the datamodelr Library/Package
@@ -14,10 +14,10 @@ show_ER_diagramme <- function(DataModel, GraphDirection = "BT") {
 }
 
 #' Initialises the Library/Package with a SQL connection and retrieves information so that the exposed functions can work correctly
-#' 
+#'
 #' Creates the SQL Connection and creates/Reads the db_fields .csv file according to the db_fields standard and according to what the SQL database looks like
 #' @param csv_path A String. The path of the db_fields .csv file to read (or to be created if it doesn't exist)
-#' @param ForceCreate_csv A Boolean. If TRUE then even if the 
+#' @param ForceCreate_csv A Boolean. If TRUE then even if the
 #' @param ExcludeIdentities A Boolean. The default inclusion behaviour for SQL Table Identities. If we're going to perform more joins afterwards or if we need to have a reference as to which table each column belongs to, then we shouldn't exclude them; if we only care about extrapolating information from each specific row, then we can exclude them by default and edit to include just the row identifier ID.
 #' @param ExcludeForeignKeys A Boolean. If we need to perform manual joins afterwards or keep a reference as to with which table there's a connection, then we need them; otherwise we can safely exclude them
 #' @param Driver A string. A SQL Driver, etc.: {SQL Server};
@@ -46,8 +46,9 @@ show_ER_diagramme <- function(DataModel, GraphDirection = "BT") {
 #'                                          table1$FKcolumn3 == table3$IDcolumn1
 #'                                          )
 initialise_return_db_fields <- function(csv_path, ForceCreate_csv, ExcludeIdentities, ExcludeForeignKeys, Driver, Database, Server, UID, PWD, Trusted_Connection, Port = 1433, ...) {
+  .GlobalEnv$db <- new.env()
   update_db_info(Driver, Database, Server, UID, PWD, Trusted_Connection, Port, ...)
-  
+
   if (!ForceCreate_csv && file.exists(csv_path)) {
     cat(paste0("\nReading db_fields from: ", csv_path, "\n\n"))
     db_fields <- read_db_fields_csv(csv_path)
@@ -59,8 +60,8 @@ initialise_return_db_fields <- function(csv_path, ForceCreate_csv, ExcludeIdenti
 }
 
 
-#' Creates the db Environment and the SQL Connection (db$con) 
-#' 
+#' Creates the db Environment and the SQL Connection (db$con)
+#'
 #' Get a list of all the Main tables in the database joined with all their relationships with only Include == TRUE columns
 #' @param Driver A string. A SQL Driver, etc.: {SQL Server};
 #' @param Database A string. The name of the SQL Database itself
@@ -80,12 +81,12 @@ initialise_return_db_fields <- function(csv_path, ForceCreate_csv, ExcludeIdenti
 update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connection, Port = 1433, ...) {
   db$con <- connect_odbc(Driver, Database, Server, UID, PWD, Trusted_Connection, Port)
   #odbcClose(db$con)
-  
+
   #Retrieving the names of all the tables starting with DIM or FACT
   db$db_tables_names <- dbListTables(db$con) %>%
     grep("^(DIM|FACT)", .) %>%
     dbListTables(db$con)[.]
-  
+
   #Getting a glimpse of all the tables
   cat("\nConnecting to the database and retrieving information...\n\n")
   db$lst_glimpses <- list()
@@ -96,19 +97,19 @@ update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connectio
         as.data.frame()
     }
   }
-  
+
   ### Creating a Data Model Diagram ###
   sQuery <- dm_re_query("sqlserver") #TODO Implementations for non SQL Server databases as well (Postrgre already exists on package, see website)
   DataModel <- DBI::dbGetQuery(db$con, sQuery) %>% collect() %>% as.data.frame(stringsAsFactors = FALSE)
-  
+
   if (any(!is.na(DataModel$ref))) { #Retrieving the Data Model Diagram from the Database
     cat("\nRelationships found on the SQL Database, we're ignoring manually written ones and rely on what is shown on the SQL Database\n")
     db$dm_f <- as.data_model(DataModel)
-    
+
   } else { #Creating a Data Model Diagram for the SQL Database from the glimpses
     cat("\nNo relationships found on the SQL Database, relying on what has been typed manually\n")
     db$dm_f <- dm_from_data_frames(db$lst_glimpses)
-    
+
     #Inserting the Relationships into the ER Diagram
     #                            MainTable$Ref == OtherTable$Identity
     # db$dm_f <- dm_add_references(db$dm_f,
@@ -116,9 +117,9 @@ update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connectio
     # )
     db$dm_f <- dm_add_references(db$dm_f, ...
     )
-    
+
   }
-  
+
   #Defining Database Variables
   cat("\nDefining Database Variables.\n")
   #db_tables_names #already exists
@@ -130,14 +131,14 @@ update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connectio
   db$db_all_rel_tabs <- db$dm_f$columns$ref #Relationships between the tables (as given in dm_add_references), (length=length(tables), Most are NA)
   db$db_all_rel_cols <- db$dm_f$columns $ref_col #The respective SQL Columns defined in dm_add_references with (length=length(tables) WHEN rels exist, Most are NA)
   if (is.null(db$db_all_rel_cols)) db$db_all_rel_cols <- rep(NA, NROW(db$db_all_rel_tabs))
-  
+
   db$db_ident_col_names <- db$dm_f$columns$column[db$dm_f$columns$key] #The (some) Identity Column Names
   db$db_ident_tab_names <- db$dm_f$columns$table[db$dm_f$columns$key] #The (some) Identity Table Names
   #db_ident_tab_names_dist <- unique(db$db_rel_tab_names) #By definition The (some) identities are unique so their respective tables should be unique too (not table names with replacement)
-  
+
   db$db_for_col_names <- db$dm_f$columns$column[!is.na(db$dm_f$columns$ref_col)] #The actual (some) foreign keys columns alone (different number to the Identities)
   db$db_for_tab_names <- db$dm_f$columns$table[!is.na(db$dm_f$columns$ref_col)] #The actual (some) foreign keys tables alone  (different number to the Identities)
-  
+
   db$db_rel_tab_names <- db$dm_f$columns$ref[!is.na(db$dm_f$columns$ref)] #The actual (some) Tables alone (different number to the Identities)
   db$db_rel_tab_names_dist <- unique(db$db_rel_tab_names) #amongst (some) tables (No replacement now, just the DISTINCT tables)
   db$db_rel_col_names <- db$dm_f$columns$ref_col[!is.na(db$dm_f$columns$ref_col)] #The actual (some) Columns alone (different number to the Identities)
@@ -160,7 +161,7 @@ update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connectio
 }
 
 #' Tibble to T-SQL
-#' 
+#'
 #' Retrieves the T-SQL code behind any Tbl even after R transformations
 #' @param TibbleDbPointer A tbl()
 #' @param con is a dbConnect {DBI} connection object to a SQL Database
@@ -187,7 +188,7 @@ connect_odbc <- function(Driver, Database, Server, UID, PWD, Trusted_Connection,
 }
 
 #' Creates a db_fields .csv file according to the db_fields standard and according to what the SQL database looks like
-#' 
+#'
 #' Returns the db_fields variable with columns: KeyType, Table, Column, Type, Comment, RelationshipWithTable, RelationshipWithColumn, Transformation
 #' @param csv_path A String. The path of the db_fields .csv file.
 #' @param ExcludeIdentities A Boolean. The default inclusion behaviour for SQL Table Identities. If we're going to perform more joins afterwards or if we need to have a reference as to which table each column belongs to, then we shouldn't exclude them; if we only care about extrapolating information from each specific row, then we can exclude them by default and edit to include just the row identifier ID.
@@ -201,9 +202,9 @@ create_default_db_fields_from_db_con <- function(csv_path, ExcludeIdentities = F
   ### Creating a Feature Selection Interface ###
   ##############################################
   #== ASSUMES THAT update_db_info() HAS BEEN EXECUTED SUCCESSFULLY FIRST ==#
-  
+
   if (is.null(csv_path)) csv_path <- "db_fields.csv"
-  
+
   #Setting Default Values:
   SelectionOptions <- c("Yes", "No", "N/A")
   if (ExcludeIdentities && ExcludeForeignKeys) {
@@ -218,19 +219,19 @@ create_default_db_fields_from_db_con <- function(csv_path, ExcludeIdentities = F
   #  -Editing default values according to accrued knowledge:
   # Include[db$db_all_cols == "Customer_ID"] = SelectionOptions[1] #At any and all points, we need to be able to identify the Customer
   # Include[db$db_all_cols == "SomeColumnName"] = SelectionOptions[2] #The information contained here is better portrayed by AnotherColumnName
-  
+
   KeyTypeOptions <- c("Identity", "ForeignKey", "None", "N/A")
   KeyType <- if_else(db$db_all_is_ident, KeyTypeOptions[1], if_else(!is.na(db$db_all_rel_cols), KeyTypeOptions[2], KeyTypeOptions[3]))
-  
+
   RelationshipWithTable <- if_else(is.na(db$db_all_rel_tabs), "", as.character(db$db_all_rel_tabs))
   RelationshipWithColumn <- if_else(is.na(db$db_all_rel_cols), "", as.character(db$db_all_rel_cols))
-  
+
   #Putting in Comments on the CSV
   Comments <- character(NROW(db$db_all_cols))
   # Comments[db_all_cols == "Some_ID"] <- "Identification for each type. Contains: All possible types"
-  
+
   CommentsOnForcedRelationships <- character(NROW(db$db_forced_rel))
-  
+
   db_fields <- data.frame(
     Include = factor(c(Include, rep.int(SelectionOptions[3], length(db$db_forced_rel))), levels = SelectionOptions),
     KeyType = c(KeyType, rep.int(KeyTypeOptions[4], length(db$db_forced_rel))),
@@ -243,14 +244,14 @@ create_default_db_fields_from_db_con <- function(csv_path, ExcludeIdentities = F
     Comment = c(Comments, CommentsOnForcedRelationships),
     stringsAsFactors = FALSE
   )
-  
+
   write_db_fields_csv(db_fields, csv_path)
-  
+
   return(db_fields)
 }
 
 #' Reads the csv file that is formatted according to the db_fields standard
-#' 
+#'
 #' Returns the db_fields, a DF with columns: KeyType, Table, Column, Type, Comment, RelationshipWithTable, RelationshipWithColumn, Transformation
 #' @param csv_path A String. The path of the db_fields .csv file.
 #' @keywords Read db_fields dbfields
@@ -270,7 +271,7 @@ read_db_fields_csv <- function(csv_path) {
 }
 
 #' Writes the csv file that is formatted according to the db_fields standard
-#' 
+#'
 #' Creates a .csv file with columns: KeyType, Table, Column, Type, Comment, RelationshipWithTable, RelationshipWithColumn, Transformation
 #' @param db_fields A DF. A dataframe formatted according to the db_fields standard.
 #' @param csv_path A String. The path of the db_fields .csv file.
@@ -280,7 +281,7 @@ read_db_fields_csv <- function(csv_path) {
 #' Example 1:
 #' db_fields <- create_default_db_fields_from_db_con(csv_path)
 #' write_db_fields_csv(db_fields, "db_fields.csv")
-#' 
+#'
 #' Example 2:
 #' db_fields <- read_db_fields_csv("db_fields.csv")
 #' write_db_fields_csv(db_fields, "db_fields.csv")
@@ -290,7 +291,7 @@ write_db_fields_csv <- function(db_fields, csv_path) {
 }
 
 #' Edits a db_fields formatted DF
-#' 
+#'
 #' Opens a browser window where the user can select which columns to include and see the relationships amongst the tables.
 #' When the browser window closes, the results are saved on the DF, but NOT on the db_fields.csv file; for this use write_db_fields_csv()
 #' @param db_fields A DF. A dataframe formatted according to the db_fields standard.
@@ -302,7 +303,7 @@ write_db_fields_csv <- function(db_fields, csv_path) {
 #' write_db_fields_csv(db_fields, "db_fields.csv")
 edit_db_fields <- function(db_fields) {
   hot_read_only_cols <- c("KeyType", "Table", "Column", "Type", "RelationshipWithTable", "RelationshipWithColumn")
-  
+
   colWidths <- integer(NCOL(db_fields))
   colWidths[names(db_fields) == "Include"] <- 60
   colWidths[names(db_fields) == "KeyType"] <- 80
@@ -313,7 +314,7 @@ edit_db_fields <- function(db_fields) {
   colWidths[names(db_fields) == "RelationshipWithColumn"] <- 162
   colWidths[names(db_fields) == "Transformation"] <- 150
   colWidths[names(db_fields) == "Comment"] <- 800
-  
+
   app = shinyApp(
     shinyUI(fluidPage(
       titlePanel("Feature Selection and Manipulation Interface \n[close window to save]"),
@@ -327,31 +328,31 @@ edit_db_fields <- function(db_fields) {
         )
       )
     )),
-    
+
     shinyServer(function(input, output, session) {
       samp <- reactiveValues()
       samp$df <- db_fields
-      
+
       output$hot = renderRHandsontable({
         if (!is.null(input$hot)) {
           db_fields  <- hot_to_r(input$hot)
         } else {
           db_fields  <- samp$df
         }
-        
+
         rhandsontable(db_fields, useTypes = TRUE, search = TRUE) %>%
           hot_col(hot_read_only_cols, readOnly = TRUE) %>%
           hot_table(highlightCol = TRUE, highlightRow = TRUE) %>% #Options for the functionality of the form
           hot_cols(colWidths = colWidths, manualColumnResize = TRUE)
-        
+
       })
-      
+
     })#,
-    
+
     #options = options(shiny.launch.browser = .rs.invokeShinyWindowViewer)
-    
+
   )
-  
+
   runApp(app, launch.browser = .rs.invokeShinyWindowViewer)
   #runApp(app, launch.browser = FALSE)
 }
