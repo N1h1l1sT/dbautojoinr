@@ -7,10 +7,10 @@
 #' @export
 #' @examples
 #' show_ER_diagramme(db$dm_f)
-show_ER_diagramme <- function(DataModel, GraphDirection = "BT") {
+show_ER_diagramme <- function(DataModel = db$dm_f, GraphDirection = "RL") {
 ### Plot an ER Diagramme
-  dm_create_graph(DataModel, rankdir = GraphDirection) %>%
-    dm_render_graph()
+  datamodelr::dm_create_graph(DataModel, rankdir = GraphDirection) %>%
+    datamodelr::dm_render_graph()
 }
 
 #' Initialises the Library/Package with a SQL connection and retrieves information so that the exposed functions can work correctly
@@ -48,6 +48,7 @@ show_ER_diagramme <- function(DataModel, GraphDirection = "BT") {
 initialise_return_db_fields <- function(csv_path, ForceCreate_csv, ExcludeIdentities, ExcludeForeignKeys, Driver, Database, Server, UID, PWD, Trusted_Connection, Port = 1433, ...) {
   .GlobalEnv$db <- new.env()
   update_db_info(Driver, Database, Server, UID, PWD, Trusted_Connection, Port, ...)
+  #update_db_info(Driver = "{SQL Server};", Database = "dbautojoinr", Server = "GiannisM-PC", UID = NULL, PWD = NULL, Trusted_Connection = TRUE, Port = 1433)
 
   if (!ForceCreate_csv && file.exists(csv_path)) {
     cat(paste0("\nReading db_fields from: ", csv_path, "\n\n"))
@@ -99,12 +100,12 @@ update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connectio
   }
 
   ### Creating a Data Model Diagram ###
-  sQuery <- dm_re_query("sqlserver") #TODO Implementations for non SQL Server databases as well (Postrgre already exists on package, see website)
+  sQuery <- datamodelr::dm_re_query("sqlserver") #TODO Implementations for non SQL Server databases as well (Postrgre already exists on package, see website)
   DataModel <- DBI::dbGetQuery(db$con, sQuery) %>% collect() %>% as.data.frame(stringsAsFactors = FALSE)
 
   if (any(!is.na(DataModel$ref))) { #Retrieving the Data Model Diagram from the Database
     cat("\nRelationships found on the SQL Database, we're ignoring manually written ones and rely on what is shown on the SQL Database\n")
-    db$dm_f <- as.data_model(DataModel)
+    db$dm_f <- datamodelr::as.data_model(DataModel)
 
   } else { #Creating a Data Model Diagram for the SQL Database from the glimpses
     cat("\nNo relationships found on the SQL Database, relying on what has been typed manually\n")
@@ -126,7 +127,7 @@ update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connectio
   db$db_all_cols <- db$dm_f$columns$column #SQL Columns (length=length(tables))
   db$db_all_tabs <- db$dm_f$columns$table #The tables each SQL Column belongs to (length=length(tables))
   db$db_all_types <- db$dm_f$columns$type #numeric, char, etc. (length=length(tables))
-  db$db_all_is_ident <- db$dm_f$columns$key #(Boolean isKey) Unique Primary Key SQL Columns, (length=length(tables), most are FALSE)
+  db$db_all_is_ident <- as.logical(db$dm_f$columns$key) #(Boolean isKey) Unique Primary Key SQL Columns, (length=length(tables), most are FALSE)
   db$db_all_is_rel <- (!is.na(db$dm_f$columns$ref)) #(length=length(tables))
   db$db_all_rel_tabs <- db$dm_f$columns$ref #Relationships between the tables (as given in dm_add_references), (length=length(tables), Most are NA)
   db$db_all_rel_cols <- db$dm_f$columns $ref_col #The respective SQL Columns defined in dm_add_references with (length=length(tables) WHEN rels exist, Most are NA)
@@ -353,6 +354,6 @@ edit_db_fields <- function(db_fields) {
 
   )
 
-  runApp(app, launch.browser = .rs.invokeShinyWindowViewer)
-  #runApp(app, launch.browser = FALSE)
+  #runApp(app, launch.browser = .rs.invokeShinyWindowViewer)
+  runApp(app, launch.browser = TRUE)
 }

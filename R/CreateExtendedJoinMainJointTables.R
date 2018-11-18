@@ -12,7 +12,7 @@
 # #Yields List of Tables
 
 #' Create Extended Main Joint Tables
-#' 
+#'
 #' Get a list of all the Main tables in the database joined with all their relationships, Renaming Columns in certain tables according to "db_TablesForColumnRenaming" and then joining the renamed columns according to the relationship that exists on "db_forced_rel" for original column name (IF it exists). This way, if, for instance, both lstTables[[DIM_Employee]] and lstTables[[FACT_Work]] reference lstTables[[DIM_Site]], then Site can be renamed to MainSite and Extended_Join on lstTables[[DIM_Employee]] as this table refers to the main/base Site of the Employee, whilst lstTables[[FACT_Work]] refers to the Site the employee worked on at that point of time (row).
 #' @param main_joint_tables A named list of tibbles/DFs (usually given by CreateMainJointTables() as a SQL DB Pointer containing all user-selected fields plus needed ones for joins
 #' @param db_fields A DF with columns: "Include, KeyType, Table, Column, Type, RelationshipWithTable, RelationshipWithColumn, Transformation, Comment" about the User Selected fields and Relationships
@@ -37,14 +37,14 @@
 #'                                                        )
 #'                                        )
 #'                                 )
-#'  
+#'
 #' print(joint_table_With_extended_joins)
 CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, con, db_forced_rel, db_TablesForColumnRenaming, db_ColumnsOldNamesToNewNames, Verbose = TRUE, get_sql_query = FALSE) {
   ColsFromDbFields <-
     db_fields %>%
     filter(Include == "Yes") %>%
     pull(Column)
-  
+
   ########################################################################################################
   ### Renaming Columns with same names amongst tables (due to joining) that hold different meaning     ###
   ### For example, if an employee is employed by a certain Building (his Main Building) but also works ###
@@ -54,17 +54,17 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, con, db_
   OldNamesToForceJoin <- NULL      #Used in order to Join Renamed Columns with foreign tables as well #NROW = NROW(db_forced_rel)
   NewNamesToForceJoin <- NULL      #Used in order to Join Renamed Columns with foreign tables as well #NROW = NROW(db_forced_rel)
   OldAndNewTabToForceJoin <- NULL  #Used in order to Join Renamed Columns with foreign tables as well #NROW = NROW(db_forced_rel)
-  
+
   for (curTableName in db_TablesForColumnRenaming) {
     CurColNames <- colnames(main_joint_tables[[curTableName]])
     OldAndNewNames <- db_ColumnsOldNamesToNewNames[[curTableName]]
-    
+
     AllOldColNames <- NULL
     AllNewColNames <- NULL
     for (i in seq(1, NROW(OldAndNewNames), by = 2)) {
       OldStartsWith <- OldAndNewNames[[i]]
       NewStartsWith <- OldAndNewNames[[i + 1]]
-      
+
       iColsNeedingChange <- startsWith(CurColNames, OldStartsWith) %>% which()
       if (NROW(iColsNeedingChange) > 0) {
         OldColNames <- CurColNames[iColsNeedingChange]
@@ -72,16 +72,16 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, con, db_
         AllOldColNames <- c(AllOldColNames, OldColNames)
         AllNewColNames <- c(AllNewColNames, NewColNames)
       }
-      
+
       iNeededRenamedColNames <- OldColNames %in% (CurColNames[CurColNames %in% ColsFromDbFields])
       db$NeededRenamedColNames <- c(db$NeededRenamedColNames, NewColNames[iNeededRenamedColNames])
-      
+
       iNamesToForceJoin <- OldColNames %in% as.character(db_forced_rel)
       OldNamesToForceJoin <- c(OldNamesToForceJoin, OldColNames[iNamesToForceJoin])
       NewNamesToForceJoin <- c(NewNamesToForceJoin, NewColNames[iNamesToForceJoin])
       OldAndNewTabToForceJoin <- c(OldAndNewTabToForceJoin, curTableName)
     }
-    
+
     if (NROW(AllOldColNames) > 0) {
       main_joint_tables[[curTableName]] %<>%
         dplyr::rename_(
@@ -89,7 +89,7 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, con, db_
         )
     }
   }
-  
+
   #This is *NOT* the normal loop to make JointTable, this is to complete renamed joins on main_joint_tables
   if (NROW(OldAndNewTabToForceJoin) > 0) {
     if (Verbose) cat("\n\n")
@@ -97,10 +97,10 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, con, db_
       CurRightTableName <- db$db_all_tabs[match(OldNamesToForceJoin[[i]], db$db_all_cols)]
       CurRightColName <- OldNamesToForceJoin[[i]]
       if (Verbose) cat(paste0("i = ", i, ". Join on: main_joint_tables[[", OldAndNewTabToForceJoin[[i]], "]].[", NewNamesToForceJoin[i], "] = [", CurRightTableName, "].[", CurRightColName ,"] as extended join for forced-join\n"))
-      
+
       TabColNames <- colnames(main_joint_tables[[CurRightTableName]])
       OldAndNewNames <- db_ColumnsOldNamesToNewNames[[OldAndNewTabToForceJoin[[i]]]]
-      
+
       #Renaming the Column Names on the Right Side that have a Renaming Schema
       NewRenamedColNames <- TabColNames
       if (NROW(OldAndNewNames) > 1) {
@@ -114,10 +114,10 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, con, db_
               NewRenamedColNames[[iColsNeedingChange[[j]]]] <- NewColNames[[j]]
             }
           }
-          
+
           iNeededRenamedColNames <- OldColNames %in% (TabColNames[TabColNames %in% ColsFromDbFields])
           db$NeededRenamedColNames <- c(db$NeededRenamedColNames, NewColNames[iNeededRenamedColNames])
-          
+
           #Renaming the rest of the names that doesn't have a Renaming Schema
           iColsNeedingChange <- (!startsWith(NewRenamedColNames, OldAndNewNames[[k + 1]])) %>% which()
           if (NROW(iColsNeedingChange) > 0) {
@@ -129,40 +129,40 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, con, db_
           iNeededRenamedColNames <- OldColNames %in% (TabColNames[TabColNames %in% ColsFromDbFields])
           db$NeededRenamedColNames <- c(db$NeededRenamedColNames, NewRenamedColNames[iNeededRenamedColNames])
         }
-        
+
       } else {
         NewRenamedColNames <- paste0(OldAndNewNames[[2]], NewRenamedColNames)
-        
+
         iNeededRenamedColNames <- OldColNames %in% (TabColNames[TabColNames %in% ColsFromDbFields])
         db$NeededRenamedColNames <- c(db$NeededRenamedColNames, NewRenamedColNames[iNeededRenamedColNames])
       }
-      
+
       db$NeededRenamedColNames %<>%
         unique()
-      
+
       #Doesn't need a special SELECT because if uneeded columns existed, they would have already been removed in the main_joint_tables creation function.
       CurRightTable <-
         main_joint_tables[[CurRightTableName]] %>%
         dplyr::rename_(
           .dots = colnames(main_joint_tables[[CurRightTableName]]) %>% set_names(NewRenamedColNames)
         )
-      
+
       DuplicateColumnsToRem <-
         colnames(CurRightTable)[colnames(CurRightTable) %in% colnames(main_joint_tables[[OldAndNewTabToForceJoin[[i]]]])] %>%
         {.[. %notin% NewNamesToForceJoin]}
-      
+
       if (NROW(DuplicateColumnsToRem) > 0) {
         CurRightTable %<>%
           select(-one_of(DuplicateColumnsToRem))
       }
-      
+
       main_joint_tables[[OldAndNewTabToForceJoin[[i]]]] %<>%
         left_join(CurRightTable,
                   by = (NewRenamedColNames[TabColNames == CurRightColName] %>% set_names(NewNamesToForceJoin[i])),
                   copy = FALSE
         )
       if (get_sql_query) db$sql_main_joint_tables[[OldAndNewTabToForceJoin[[i]]]] <- dbplyr_to_sql(main_joint_tables[[OldAndNewTabToForceJoin[[i]]]], con)
-      
+
       selected_cols <- data.frame(raw = colnames(main_joint_tables[[OldAndNewTabToForceJoin[[i]]]]),
                                   clean = sub("^([^.]*).*", "\\1", colnames(main_joint_tables[[OldAndNewTabToForceJoin[[i]]]])),
                                   stringsAsFactors = FALSE
@@ -170,9 +170,9 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, con, db_
         group_by(clean) %>%
         summarize(translated = max(raw)) %>%
         pull(translated)
-      
+
       renamed_cols <- stri_replace_all_fixed(selected_cols, ".y", "")
-      
+
       if (any(selected_cols != renamed_cols)) {
         main_joint_tables[[OldAndNewTabToForceJoin[[i]]]] %<>%
           select_(.dots = selected_cols %>% set_names(renamed_cols))
