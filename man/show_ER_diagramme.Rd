@@ -4,7 +4,7 @@
 \alias{show_ER_diagramme}
 \title{Plots the ER Digramme for the SQL Database}
 \usage{
-show_ER_diagramme(DataModel, GraphDirection = "BT")
+show_ER_diagramme(DataModel = db$dm_f, GraphDirection = "RL")
 }
 \arguments{
 \item{DataModel}{A data model object as given by the datamodelr Library/Package}

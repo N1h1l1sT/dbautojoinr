@@ -4,18 +4,12 @@
 \alias{initialise_return_db_fields}
 \title{Initialises the Library/Package with a SQL connection and retrieves information so that the exposed functions can work correctly}
 \usage{
-initialise_return_db_fields(csv_path, ForceCreate_csv, ExcludeIdentities,
-  ExcludeForeignKeys, Driver, Database, Server, UID, PWD,
-  Trusted_Connection, Port = 1433, ...)
+initialise_return_db_fields(csv_path, Driver, Database, Server, UID, PWD,
+  Trusted_Connection, Port, ..., ForceCreate_csv = FALSE,
+  ExcludeIdentities = FALSE, ExcludeForeignKeys = TRUE)
 }
 \arguments{
 \item{csv_path}{A String. The path of the db_fields .csv file to read (or to be created if it doesn't exist)}
-
-\item{ForceCreate_csv}{A Boolean. If TRUE then even if the}
-
-\item{ExcludeIdentities}{A Boolean. The default inclusion behaviour for SQL Table Identities. If we're going to perform more joins afterwards or if we need to have a reference as to which table each column belongs to, then we shouldn't exclude them; if we only care about extrapolating information from each specific row, then we can exclude them by default and edit to include just the row identifier ID.}
-
-\item{ExcludeForeignKeys}{A Boolean. If we need to perform manual joins afterwards or keep a reference as to with which table there's a connection, then we need them; otherwise we can safely exclude them}
 
 \item{Driver}{A string. A SQL Driver, etc.: {SQL Server};}
 
@@ -32,6 +26,12 @@ initialise_return_db_fields(csv_path, ForceCreate_csv, ExcludeIdentities,
 \item{Port}{An Integer. The Port which the SQL Listener is listening at}
 
 \item{...}{If the relationships exist on the SQL Database, this can be left blank. Logical expressions for the SQL Relationships in the format: table1$FKcolumn1 == table2$IDcolumn5, table1$FKcolumn2 == table3$IDcolumn5, ...}
+
+\item{ForceCreate_csv}{A Boolean. If TRUE then even if the}
+
+\item{ExcludeIdentities}{A Boolean. The default inclusion behaviour for SQL Table Identities. If we're going to perform more joins afterwards or if we need to have a reference as to which table each column belongs to, then we shouldn't exclude them; if we only care about extrapolating information from each specific row, then we can exclude them by default and edit to include just the row identifier ID.}
+
+\item{ExcludeForeignKeys}{A Boolean. If we need to perform manual joins afterwards or keep a reference as to with which table there's a connection, then we need them; otherwise we can safely exclude them}
 }
 \description{
 Creates the SQL Connection and creates/Reads the db_fields .csv file according to the db_fields standard and according to what the SQL database looks like

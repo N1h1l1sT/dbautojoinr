@@ -20,7 +20,7 @@
 #'
 #' print(main_joint_tables)
 #' All the Main Tables (tables with foreign keys) are joined with their relationships and are returned as a list of tibbles (n = number of tabels with foreign keys that also contain User Selected fields)
-CreateMainJointTables <- function(db_fields, db_forced_rel, DeselectKeysIfIncludeFalse, con, Verbose = TRUE, get_sql_query = FALSE) {
+CreateMainJointTables <- function(db_fields, db_forced_rel, con = db$con, DeselectKeysIfIncludeFalse = TRUE, Verbose = TRUE, get_sql_query = FALSE) {
   #Selects TABLES according to db_fields
   #Assumptions: Database is in Canonical Form, No 2 columns have the same name (Usual good practice in Databases)
   #If there are ANY .x, .y variables created THEN it means one or more columns between Tables had the same name! (It' frowned upon)

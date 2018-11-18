@@ -4,7 +4,7 @@
 \alias{edit_db_fields}
 \title{Edits a db_fields formatted DF}
 \usage{
-edit_db_fields(db_fields)
+edit_db_fields(db_fields = db$db_fields)
 }
 \arguments{
 \item{db_fields}{A DF. A dataframe formatted according to the db_fields standard.}

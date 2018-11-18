@@ -45,10 +45,9 @@ show_ER_diagramme <- function(DataModel = db$dm_f, GraphDirection = "RL") {
 #'                                          table1$FKcolumn2 == table2$IDcolumn1,
 #'                                          table1$FKcolumn3 == table3$IDcolumn1
 #'                                          )
-initialise_return_db_fields <- function(csv_path, ForceCreate_csv, ExcludeIdentities, ExcludeForeignKeys, Driver, Database, Server, UID, PWD, Trusted_Connection, Port = 1433, ...) {
+initialise_return_db_fields <- function(csv_path, Driver, Database, Server, UID, PWD, Trusted_Connection, Port, ..., ForceCreate_csv = FALSE, ExcludeIdentities = FALSE, ExcludeForeignKeys = TRUE) {
   .GlobalEnv$db <- new.env()
   update_db_info(Driver, Database, Server, UID, PWD, Trusted_Connection, Port, ...)
-  #update_db_info(Driver = "{SQL Server};", Database = "dbautojoinr", Server = "GiannisM-PC", UID = NULL, PWD = NULL, Trusted_Connection = TRUE, Port = 1433)
 
   if (!ForceCreate_csv && file.exists(csv_path)) {
     cat(paste0("\nReading db_fields from: ", csv_path, "\n\n"))
@@ -176,15 +175,10 @@ dbplyr_to_sql <- function(TibbleDbPointer, con) {
 }
 
 connect_odbc <- function(Driver, Database, Server, UID, PWD, Trusted_Connection, Port = 1433) {
-  if (Trusted_Connection) {
+  if (is.not.null(Trusted_Connection) && !Trusted_Connection) Trusted_Connection <- NULL
     con <- DBI::dbConnect(odbc::odbc(), Driver = Driver,
                           Database = Database, Server = Server, UID = UID,
-                          PWD = PWD, trusted_connection = TRUE, Port = Port)
-  } else {
-    con <- DBI::dbConnect(odbc::odbc(), Driver = Driver,
-                          Database = Database, Server = Server, UID = UID,
-                          PWD = PWD, Port = Port)
-  }
+                          PWD = PWD, trusted_connection = Trusted_Connection, Port = Port)
   return(con)
 }
 
@@ -260,15 +254,15 @@ create_default_db_fields_from_db_con <- function(csv_path, ExcludeIdentities = F
 #' @examples
 #' db_fields <- read_db_fields_csv("db_fields.csv")
 read_db_fields_csv <- function(csv_path) {
-  db_fields <-
+  db$db_fields <-
     read.csv(csv_path,
              header = TRUE,
              colClasses = c("KeyType" = "character", "Table" = "character", "Column" = "character", "Type" = "character",
                             "Comment" = "character", "RelationshipWithTable" = "character", "RelationshipWithColumn" = "character",
                             "Transformation" = "character"), stringsAsFactors = FALSE)
-  db_fields$Include %<>%
+  db$db_fields$Include %<>%
     factor(levels=c("Yes", "No", "N/A"))
-  return(db_fields)
+  return(db$db_fields)
 }
 
 #' Writes the csv file that is formatted according to the db_fields standard
@@ -302,7 +296,7 @@ write_db_fields_csv <- function(db_fields, csv_path) {
 #' db_fields <- read_db_fields_csv("db_fields.csv")
 #' edit_db_fields(db_fields)
 #' write_db_fields_csv(db_fields, "db_fields.csv")
-edit_db_fields <- function(db_fields) {
+edit_db_fields <- function(db_fields = db$db_fields) {
   hot_read_only_cols <- c("KeyType", "Table", "Column", "Type", "RelationshipWithTable", "RelationshipWithColumn")
 
   colWidths <- integer(NCOL(db_fields))

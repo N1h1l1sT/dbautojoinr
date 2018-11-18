@@ -4,17 +4,18 @@
 \alias{CreateMainJointTables}
 \title{Create Extended Main Joint Tables}
 \usage{
-CreateMainJointTables(db_fields, db_forced_rel, DeselectKeysIfIncludeFalse,
-  con, Verbose = TRUE, get_sql_query = FALSE)
+CreateMainJointTables(db_fields, db_forced_rel, con = db$con,
+  DeselectKeysIfIncludeFalse = TRUE, Verbose = TRUE,
+  get_sql_query = FALSE)
 }
 \arguments{
 \item{db_fields}{A DF with columns: "Include, KeyType, Table, Column, Type, RelationshipWithTable, RelationshipWithColumn, Transformation, Comment" about the User Selected fields and Relationships}
 
 \item{db_forced_rel}{A Named String Vector. The vector names MUST point to the main table to be used for the 1-Joint-Table as its LHS}
 
-\item{DeselectKeysIfIncludeFalse}{A Boolean. Must be FALSE if we need to continue to 1-Joint-Table, otherwise needed Identity and Foreign keys might be missing}
+\item{con}{A dbConnect {DBI} connection object to a SQL Database}
 
-\item{con}{is a dbConnect {DBI} connection object to a SQL Database}
+\item{DeselectKeysIfIncludeFalse}{A Boolean. Must be FALSE if we need to continue to 1-Joint-Table, otherwise needed Identity and Foreign keys might be missing}
 
 \item{Verbose}{A Boolean. Verbose = TRUE will output the consecutive joins as they happen}
 
@@ -26,7 +27,7 @@ Get a list of all the Main tables in the database joined with all their relation
 \examples{
 main_joint_tables <-
   CreateMainJointTables(db_fields, c(Hours_SiteID = "Site_SiteID", Hours_EmployeeID = "Employee_ID"), FALSE, db$con) \%>\%
- 
+
 print(main_joint_tables)
 All the Main Tables (tables with foreign keys) are joined with their relationships and are returned as a list of tibbles (n = number of tabels with foreign keys that also contain User Selected fields)
 }
