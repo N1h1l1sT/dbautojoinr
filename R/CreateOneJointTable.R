@@ -4,7 +4,7 @@
 #   CreateMainJointTables(db_fields, db_forced_rel, FALSE, db$con) %>%
 #   CreateOneJointTable(db_fields, db$con)
 # #Yields a Table
-# 
+#
 # #Get 1 table containing the information that main_joint_tables contained joined as given in "db_forced_rel"
 # #Renames as given by "db_TablesForColumnRenaming", extended joins tables that hold different meaning depending on which table
 # #they are joined with, and then joins everthing into 1 table as given by the relationships on "db_forced_rel"
@@ -23,7 +23,7 @@
 #The order is set on Database.R::update_db_info::db_forced_rel and the initial table there will be the table used (Left) to join with everything else
 
 ### !Remember to put rename conventions on db_ColumnsOldNamesToNewNames to rename Columns in main_joint_tables that have the same name
-###  between tables, but hold different information. 
+###  between tables, but hold different information.
 ########################################################################################################
 ### For example, if an employee is employed by a certain Building (his Main Building) but also works ###
 ### on others too. So DIM_Employee will have a BuildingID AND FACT_Work will have a BuildingID too.  ###
@@ -43,7 +43,7 @@
 is.not.null <- function(x)(!is.null(x))
 
 #' Create Extended Main Joint Tables
-#' 
+#'
 #' Get 1 table containing the information that main_joint_tables contained joined as given in "db_forced_rel" WITH or WITHOUT Renames as given by "db_TablesForColumnRenaming"
 #' @param main_joint_tables A named list of tibbles/DFs (usually given by CreateMainJointTables() as a SQL DB Pointer containing all user-selected fields plus needed ones for joins
 #' @param db_fields A DF with columns: "Include, KeyType, Table, Column, Type, RelationshipWithTable, RelationshipWithColumn, Transformation, Comment" about the User Selected fields and Relationships
@@ -59,18 +59,18 @@ is.not.null <- function(x)(!is.null(x))
 #' joint_table_Without_extended_joins <-
 #'   CreateMainJointTables(db_fields, db_forced_rel, FALSE, db$con) %>%
 #'   CreateOneJointTable(db_fields, db$con, db_forced_rel)
-#'  
+#'
 #' print(joint_table_Without_extended_joins)
 #' #No renames are used and therefore no extended joins.
 #' #This assumes that all tables can be joined together without any 1 table being needed twice.
-#' 
-#' 
+#'
+#'
 #' Example 2:
 #' joint_table_With_extended_joins <-
 #'   CreateMainJointTables(db_fields, db_forced_rel, FALSE, db$con) %>%
 #'   CreateExtendedMainJointTables(db_fields, db$con, c("DIM_Employee"), db_forced_rel) %>%
 #'   CreateOneJointTable(db_fields, db$con, db_forced_rel)
-#' 
+#'
 #' print(joint_table_Without_extended_joins)
 #' #Renames as given by "db_TablesForColumnRenaming", create extended joins on main_joint_tables for foreign tables that hold different meaning depending on which table they are joined with, and then everthing is joined into 1 table as given by the relationships on "db_forced_rel"
 CreateOneJointTable <- function(main_joint_tables, db_fields, con, db_forced_rel, Verbose = TRUE, get_sql_query = TRUE) {
@@ -78,7 +78,7 @@ CreateOneJointTable <- function(main_joint_tables, db_fields, con, db_forced_rel
     db_fields %>%
     filter(Include == "Yes") %>%
     pull(Column)
-  
+
   # ForcedTable <- names(main_joint_tables)
   if (length(db_forced_rel) > 0) {
     NewTabNames <- NULL
@@ -88,7 +88,7 @@ CreateOneJointTable <- function(main_joint_tables, db_fields, con, db_forced_rel
       NewColNames <- c(NewColNames, CurTabColNames)
       NewTabNames <- c(NewTabNames, rep(TabName, NROW(CurTabColNames)))
     }
-    
+
     if (Verbose) cat("\n\n")
     joint_table <- main_joint_tables[[NewTabNames[which(NewColNames == names(db_forced_rel[1]))]]]
     for (i in 1:NROW(db_forced_rel)) {
@@ -96,24 +96,24 @@ CreateOneJointTable <- function(main_joint_tables, db_fields, con, db_forced_rel
       CurRightColName <- as.character(db_forced_rel[i])
       RightColNames <- colnames(main_joint_tables[[CurRightTableName]])
       if (Verbose) cat(paste0("i = ", i, ". Join on: [", "joint_table", "].[", names(db_forced_rel)[i], "] = main_joint_tables[[", CurRightTableName, "]].[", CurRightColName,"]\n"))
-      
+
       DuplicateColumnsToRem <-
         RightColNames[RightColNames %in% colnames(joint_table)] %>%
         {.[. %notin% CurRightColName]}
-      
+
       RightTabForJoin <- main_joint_tables[[CurRightTableName]]
       if (NROW(DuplicateColumnsToRem) > 0) {
         RightTabForJoin %<>%
           select(-!!(DuplicateColumnsToRem))
       }
-      
+
       joint_table %<>%
         left_join(RightTabForJoin,
                   by = (CurRightColName %>% set_names(names(db_forced_rel)[i])),
                   copy = FALSE
         ) %>%
         mutate(!!CurRightColName := !!(rlang::sym(names(db_forced_rel)[i])))
-      
+
       selected_cols <- data.frame(raw = colnames(joint_table),
                                   clean = sub("^([^.]*).*", "\\1", colnames(joint_table)),
                                   stringsAsFactors = FALSE
@@ -121,29 +121,29 @@ CreateOneJointTable <- function(main_joint_tables, db_fields, con, db_forced_rel
         group_by(clean) %>%
         summarize(translated = max(raw)) %>%
         pull(translated)
-      
+
       renamed_cols <- stri_replace_all_fixed(selected_cols, ".y", "")
-      
+
       if (NROW(colnames(joint_table)) != NROW(renamed_cols) || any(colnames(joint_table) != renamed_cols)) {
         joint_table %<>%
           select_(.dots = selected_cols %>% set_names(renamed_cols))
       }
       # if (get_sql_query) db$sql_joint_table <- dbplyr_to_sql(joint_table, con) #If left inside the loop, it can be used for debugging purposes, too.
-      
+
     }
-    
+
     included_cols <-
       c(
         ColsFromDbFields[ColsFromDbFields %in% colnames(joint_table)],
         db$NeededRenamedColNames[db$NeededRenamedColNames %in% colnames(joint_table)]
       ) %>% unique()
-    
+
     if (NROW(colnames(joint_table)) != NROW(included_cols) || any(colnames(joint_table) != included_cols)) {
       joint_table %<>%
         select(one_of(!!(included_cols)))
     }
     if (get_sql_query) db$sql_joint_table <- dbplyr_to_sql(joint_table, con)
-    
+
   }
   return(joint_table)
 }

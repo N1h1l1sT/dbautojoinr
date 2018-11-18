@@ -133,7 +133,7 @@ GO
 
 CREATE TABLE [dbo].[DIM_Region](
 	[Region_ID] [int] IDENTITY(1,1) NOT NULL,
-	[Region_Name] [nchar](50) NOT NULL,
+	[Region_Name] [nvarchar](50) NOT NULL,
 	[Region_Useless1] [nvarchar](255) NULL,
 	[Region_Useless2] [int] NULL,
 	[Region_EntryOn] [datetime2](0) NOT NULL,

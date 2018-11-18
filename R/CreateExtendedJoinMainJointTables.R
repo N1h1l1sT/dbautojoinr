@@ -39,7 +39,7 @@
 #'                                 )
 #'
 #' print(joint_table_With_extended_joins)
-CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, con, db_forced_rel, db_TablesForColumnRenaming, db_ColumnsOldNamesToNewNames, Verbose = TRUE, get_sql_query = FALSE) {
+CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, con, db_forced_rel, db_TablesForColumnRenaming, db_ColumnsOldNamesToNewNames, DeselectKeysIfIncludeFalse = TRUE, Verbose = TRUE, get_sql_query = FALSE) {
   ColsFromDbFields <-
     db_fields %>%
     filter(Include == "Yes") %>%
@@ -105,10 +105,10 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, con, db_
       NewRenamedColNames <- TabColNames
       if (NROW(OldAndNewNames) > 1) {
         for (k in seq(1, NROW(OldAndNewNames), by = 2)) {
-          iColsNeedingChange <- startsWith(NewRenamedColNames, OldAndNewNames[[k]]) %>% which()
+          iColsNeedingChange <- startsWith(TabColNames, OldAndNewNames[[k]]) %>% which()
           if (NROW(iColsNeedingChange) > 0) {
             NewColNames <- NULL
-            OldColNames <- NewRenamedColNames[iColsNeedingChange]
+            OldColNames <- TabColNames[iColsNeedingChange]
             for (j in 1:NROW(OldColNames)) {
               NewColNames <- c(NewColNames, ReplaceStartWithSthElse(OldColNames[[j]], OldAndNewNames[[k]], OldAndNewNames[[k + 1]]))
               NewRenamedColNames[[iColsNeedingChange[[j]]]] <- NewColNames[[j]]
@@ -119,15 +119,17 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, con, db_
           db$NeededRenamedColNames <- c(db$NeededRenamedColNames, NewColNames[iNeededRenamedColNames])
 
           #Renaming the rest of the names that doesn't have a Renaming Schema
-          iColsNeedingChange <- (!startsWith(NewRenamedColNames, OldAndNewNames[[k + 1]])) %>% which()
+          iColsNeedingChange <- (!startsWith(TabColNames, OldAndNewNames[[k]])) %>% which()
           if (NROW(iColsNeedingChange) > 0) {
-            OldColNames <- NewRenamedColNames[iColsNeedingChange]
+            NewColNames <- NULL
+            OldColNames <- TabColNames[iColsNeedingChange]
             for (j in 1:NROW(OldColNames)) {
-              NewRenamedColNames[[iColsNeedingChange[[j]]]] <- paste0(OldAndNewNames[[k + 1]], OldColNames[[j]])
+              NewColNames <- c(NewColNames, paste0(OldAndNewNames[[k + 1]], OldColNames[[j]]))
+              NewRenamedColNames[[iColsNeedingChange[[j]]]] <- NewColNames[[j]]
             }
           }
           iNeededRenamedColNames <- OldColNames %in% (TabColNames[TabColNames %in% ColsFromDbFields])
-          db$NeededRenamedColNames <- c(db$NeededRenamedColNames, NewRenamedColNames[iNeededRenamedColNames])
+          db$NeededRenamedColNames <- c(db$NeededRenamedColNames, NewColNames[iNeededRenamedColNames])
         }
 
       } else {
@@ -161,7 +163,6 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, con, db_
                   by = (NewRenamedColNames[TabColNames == CurRightColName] %>% set_names(NewNamesToForceJoin[i])),
                   copy = FALSE
         )
-      if (get_sql_query) db$sql_main_joint_tables[[OldAndNewTabToForceJoin[[i]]]] <- dbplyr_to_sql(main_joint_tables[[OldAndNewTabToForceJoin[[i]]]], con)
 
       selected_cols <- data.frame(raw = colnames(main_joint_tables[[OldAndNewTabToForceJoin[[i]]]]),
                                   clean = sub("^([^.]*).*", "\\1", colnames(main_joint_tables[[OldAndNewTabToForceJoin[[i]]]])),
@@ -177,6 +178,21 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, con, db_
         main_joint_tables[[OldAndNewTabToForceJoin[[i]]]] %<>%
           select_(.dots = selected_cols %>% set_names(renamed_cols))
       }
+
+      if (DeselectKeysIfIncludeFalse) { # MUST BE FALSE if we need to do any more joins (e.g. CreateOneJointTable())
+        included_cols <-
+          c(
+            ColsFromDbFields[ColsFromDbFields %in% renamed_cols],
+            db$NeededRenamedColNames[db$NeededRenamedColNames %in% renamed_cols]
+          ) %>% unique()
+
+        if (NROW(renamed_cols) != NROW(included_cols) || any(renamed_cols != included_cols)) {
+          main_joint_tables[[OldAndNewTabToForceJoin[[i]]]] %<>%
+            select(one_of(!!(included_cols)))
+        }
+      }
+      if (get_sql_query) db$sql_main_joint_tables[[OldAndNewTabToForceJoin[[i]]]] <- dbplyr_to_sql(main_joint_tables[[OldAndNewTabToForceJoin[[i]]]], con)
+
     }
   }
   return(main_joint_tables)

@@ -133,8 +133,8 @@ update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connectio
   db$db_all_rel_cols <- db$dm_f$columns $ref_col #The respective SQL Columns defined in dm_add_references with (length=length(tables) WHEN rels exist, Most are NA)
   if (is.null(db$db_all_rel_cols)) db$db_all_rel_cols <- rep(NA, NROW(db$db_all_rel_tabs))
 
-  db$db_ident_col_names <- db$dm_f$columns$column[db$dm_f$columns$key] #The (some) Identity Column Names
-  db$db_ident_tab_names <- db$dm_f$columns$table[db$dm_f$columns$key] #The (some) Identity Table Names
+  db$db_ident_col_names <- db$dm_f$columns$column[as.logical(db$dm_f$columns$key)] #The (some) Identity Column Names
+  db$db_ident_tab_names <- db$dm_f$columns$table[as.logical(db$dm_f$columns$key)] #The (some) Identity Table Names
   #db_ident_tab_names_dist <- unique(db$db_rel_tab_names) #By definition The (some) identities are unique so their respective tables should be unique too (not table names with replacement)
 
   db$db_for_col_names <- db$dm_f$columns$column[!is.na(db$dm_f$columns$ref_col)] #The actual (some) foreign keys columns alone (different number to the Identities)
@@ -336,16 +336,20 @@ edit_db_fields <- function(db_fields) {
 
       output$hot = renderRHandsontable({
         if (!is.null(input$hot)) {
-          db_fields  <- hot_to_r(input$hot)
+          db$db_fields  <- hot_to_r(input$hot)
         } else {
-          db_fields  <- samp$df
+          db$db_fields  <- samp$df
         }
 
-        rhandsontable(db_fields, useTypes = TRUE, search = TRUE) %>%
+        rhandsontable(db$db_fields, useTypes = TRUE, search = TRUE) %>%
           hot_col(hot_read_only_cols, readOnly = TRUE) %>%
           hot_table(highlightCol = TRUE, highlightRow = TRUE) %>% #Options for the functionality of the form
           hot_cols(colWidths = colWidths, manualColumnResize = TRUE)
 
+      })
+
+      session$onSessionEnded(function() {
+        stopApp()
       })
 
     })#,
@@ -355,5 +359,7 @@ edit_db_fields <- function(db_fields) {
   )
 
   #runApp(app, launch.browser = .rs.invokeShinyWindowViewer)
-  runApp(app, launch.browser = TRUE)
+  runApp(app, launch.browser = getOption("shiny.launch.browser", interactive()))
+
+  return(db$db_fields)
 }
