@@ -7,7 +7,7 @@
 #' @export
 #' @examples
 #' show_ER_diagramme(db$dm_f)
-show_ER_diagramme <- function(DataModel = db$dm_f, GraphDirection = "RL") {
+show_ER_diagramme <- function(DataModel = db$dm_f, GraphDirection = "LR") {
 ### Plot an ER Diagramme
   datamodelr::dm_create_graph(DataModel, rankdir = GraphDirection) %>%
     datamodelr::dm_render_graph()
