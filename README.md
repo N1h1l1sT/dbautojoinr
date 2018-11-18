@@ -297,7 +297,7 @@ joint_table_With_extended_joins <-
                                 DeselectKeysIfIncludeFalse = FALSE,
                                 Verbose = TRUE,
                                 get_sql_query = FALSE
-                                )
+                                ) %>%
   CreateOneJointTable(db_fields,
                       db_forced_rel,
                       db$con,
@@ -305,5 +305,26 @@ joint_table_With_extended_joins <-
                       get_sql_query = FALSE
                       )
 ```
+
+#### 8. Looking at the results
+
+```r
+sapply(names(main_joint_tables), function(x) NCOL(main_joint_tables[[x]]))
+# Number of Columns on the tables of main_joint_tables
+#    DIM_Site DIM_Employee   FACT_Hours 
+#           2            4            6
+
+sapply(names(extended_main_joint_tables), function(x) NCOL(extended_main_joint_tables[[x]]))
+# Number of Columns on the tables of extended_main_joint_tables
+#    DIM_Site DIM_Employee   FACT_Hours 
+#           2            5            6 
+
+print(c(joint_table = NCOL(joint_table_Without_extended_joins), joint_table_extended = NCOL(joint_table_With_extended_joins)))
+# Number of Columns on the 2 Fully Joint Tables, withand without extended joins
+         joint_table joint_table_extended 
+                   7                    9 
+
+```
+
 
 #### **End of Demo**
