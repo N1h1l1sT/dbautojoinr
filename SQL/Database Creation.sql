@@ -2,11 +2,11 @@ USE [master]
 GO
 
 CREATE DATABASE [dbautojoinr]
- CONTAINMENT = NONE
- ON  PRIMARY 
-( NAME = N'dbautojoinr', FILENAME = N'C:\Users\GiannisM\Dropbox\Data Science\Code Pre-Made\dbautojoinr\Database\dbautojoinr.mdf' , SIZE = 8192KB , MAXSIZE = UNLIMITED, FILEGROWTH = 65536KB )
- LOG ON 
-( NAME = N'dbautojoinr_log', FILENAME = N'C:\Users\GiannisM\Dropbox\Data Science\Code Pre-Made\dbautojoinr\Database\dbautojoinr_log.ldf' , SIZE = 8192KB , MAXSIZE = 2048GB , FILEGROWTH = 65536KB )
+-- CONTAINMENT = NONE
+-- ON  PRIMARY 
+--( NAME = N'dbautojoinr', FILENAME = N'C:\Users\GiannisM\Dropbox\Data Science\Code Pre-Made\dbautojoinr\Database\dbautojoinr.mdf' , SIZE = 8192KB , MAXSIZE = UNLIMITED, FILEGROWTH = 65536KB )
+-- LOG ON 
+--( NAME = N'dbautojoinr_log', FILENAME = N'C:\Users\GiannisM\Dropbox\Data Science\Code Pre-Made\dbautojoinr\Database\dbautojoinr_log.ldf' , SIZE = 8192KB , MAXSIZE = 2048GB , FILEGROWTH = 65536KB )
 GO
 
 --ALTER DATABASE [dbautojoinr] MODIFY FILE
