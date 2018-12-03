@@ -143,7 +143,6 @@ update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connectio
   db$db_rel_tab_names_dist <- unique(db$db_rel_tab_names) #amongst (some) tables (No replacement now, just the DISTINCT tables)
   db$db_rel_col_names <- db$dm_f$columns$ref_col[!is.na(db$dm_f$columns$ref_col)] #The actual (some) Columns alone (different number to the Identities)
   db$db_rel_col_names_dist <- unique(db$db_rel_col_names) #Out of the (some) fields/columns creating the relationships, (less some) are unique (such that A_Table creates relationships with n other tables)
-  # db$db_TablesForColumnRenaming <- c("DIM_Employee")
   # db$db_ColumnsOldNamesToNewNames <-
   #   list(
   #     DIM_Employee = c(
@@ -169,7 +168,7 @@ update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connectio
 #' @export
 #' @examples
 #' dbplyr_to_sql(tbl("TableName", db$con) db$con)
-dbplyr_to_sql <- function(TibbleDbPointer, con) {
+dbplyr_to_sql <- function(TibbleDbPointer, con = db$con) {
   SQL <- sql_render(sql_build(TibbleDbPointer, con), con)
   return(SQL)
 }

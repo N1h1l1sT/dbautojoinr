@@ -5,7 +5,7 @@
 \title{Create Extended Main Joint Tables}
 \usage{
 CreateExtendedMainJointTables(main_joint_tables, db_fields, db_forced_rel,
-  db_TablesForColumnRenaming, db_ColumnsOldNamesToNewNames, con = db$con,
+  db_ColumnsOldNamesToNewNames, con = db$con,
   DeselectKeysIfIncludeFalse = TRUE, Verbose = TRUE,
   get_sql_query = FALSE)
 }
@@ -16,9 +16,7 @@ CreateExtendedMainJointTables(main_joint_tables, db_fields, db_forced_rel,
 
 \item{db_forced_rel}{A Named String Vector. The vector names MUST point to the main table to be used for the 1-Joint-Table as its LHS}
 
-\item{db_TablesForColumnRenaming}{A string Vector. The names of the tables that need renaming}
-
-\item{db_ColumnsOldNamesToNewNames}{A names List. Names correspond to the Table names, and the vectors inside will be used to renamed SQL Columns starting with db_ColumnsOldNamesToNewNames[i][j] to db_ColumnsOldNamesToNewNames[i][j+1] with j going from 1 to length of db_ColumnsOldNamesToNewNames[i] by 2}
+\item{db_ColumnsOldNamesToNewNames}{A named List. Names correspond to the Table names, and the vectors inside will be used to renamed SQL Columns starting with db_ColumnsOldNamesToNewNames[i][j] to db_ColumnsOldNamesToNewNames[i][j+1] with j going from 1 to length of db_ColumnsOldNamesToNewNames[i] by 2}
 
 \item{con}{is a dbConnect {DBI} connection object to a SQL Database}
 
@@ -27,14 +25,13 @@ CreateExtendedMainJointTables(main_joint_tables, db_fields, db_forced_rel,
 \item{get_sql_query}{A Boolean. get_sql_query = TRUE will create/edit the db$sql_main_joint_tables that output the SQL Code for the tables}
 }
 \description{
-Get a list of all the Main tables in the database joined with all their relationships, Renaming Columns in certain tables according to "db_TablesForColumnRenaming" and then joining the renamed columns according to the relationship that exists on "db_forced_rel" for original column name (IF it exists). This way, if, for instance, both lstTables[[DIM_Employee]] and lstTables[[FACT_Work]] reference lstTables[[DIM_Site]], then Site can be renamed to MainSite and Extended_Join on lstTables[[DIM_Employee]] as this table refers to the main/base Site of the Employee, whilst lstTables[[FACT_Work]] refers to the Site the employee worked on at that point of time (row).
+Get a list of all the Main tables in the database joined with all their relationships, Renaming Columns in certain tables according to "db_ColumnsOldNamesToNewNames" and then joining the renamed columns according to the relationship that exists on "db_forced_rel" for original column name (IF it exists). This way, if, for instance, both lstTables[[DIM_Employee]] and lstTables[[FACT_Work]] reference lstTables[[DIM_Site]], then Site can be renamed to MainSite and Extended_Join on lstTables[[DIM_Employee]] as this table refers to the main/base Site of the Employee, whilst lstTables[[FACT_Work]] refers to the Site the employee worked on at that point of time (row).
 }
 \examples{
 extended_main_joint_tables <-
   CreateMainJointTables(db_fields, db_forced_rel, FALSE, db$con) \%>\%
   CreateExtendedMainJointTables(db_fields, db$con,
                                 db_forced_rel = c(Hours_SiteID = "Site_SiteID", Hours_EmployeeID = "Employee_ID")
-                                db_TablesForColumnRenaming = c("DIM_Employee"),
                                 db_ColumnsOldNamesToNewNames =
                                   list(
                                        DIM_Employee = c(

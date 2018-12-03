@@ -4,7 +4,7 @@
 \alias{dbplyr_to_sql}
 \title{Tibble to T-SQL}
 \usage{
-dbplyr_to_sql(TibbleDbPointer, con)
+dbplyr_to_sql(TibbleDbPointer, con = db$con)
 }
 \arguments{
 \item{TibbleDbPointer}{A tbl()}

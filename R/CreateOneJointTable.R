@@ -6,7 +6,7 @@
 # #Yields a Table
 #
 # #Get 1 table containing the information that main_joint_tables contained joined as given in "db_forced_rel"
-# #Renames as given by "db_TablesForColumnRenaming", extended joins tables that hold different meaning depending on which table
+# #Renames as given by "db_ColumnsOldNamesToNewNames", extended joins tables that hold different meaning depending on which table
 # #they are joined with, and then joins everything into 1 table as given by the relationships on "db_forced_rel"
 # joint_table_With_extended_joins <-
 #   CreateMainJointTables(db_fields, db_forced_rel, FALSE, db$con) %>%
@@ -40,7 +40,7 @@
 
 #' Create Extended Main Joint Tables
 #'
-#' Get 1 table containing the information that main_joint_tables contained joined as given in "db_forced_rel" WITH or WITHOUT Renames as given by "db_TablesForColumnRenaming"
+#' Get 1 table containing the information that main_joint_tables contained joined as given in "db_forced_rel" WITH or WITHOUT Renames as given by "db_ColumnsOldNamesToNewNames"
 #' @param main_joint_tables A named list of tibbles/DFs (usually given by CreateMainJointTables() as a SQL DB Pointer containing all user-selected fields plus needed ones for joins
 #' @param db_fields A DF with columns: "Include, KeyType, Table, Column, Type, RelationshipWithTable, RelationshipWithColumn, Transformation, Comment" about the User Selected fields and Relationships
 #' @param con is a dbConnect {DBI} connection object to a SQL Database
@@ -68,7 +68,7 @@
 #'   CreateOneJointTable(db_fields, db$con, db_forced_rel)
 #'
 #' print(joint_table_Without_extended_joins)
-#' #Renames as given by "db_TablesForColumnRenaming", create extended joins on main_joint_tables for foreign tables that hold different meaning depending on which table they are joined with, and then everything is joined into 1 table as given by the relationships on "db_forced_rel"
+#' #Renames as given by "db_ColumnsOldNamesToNewNames", create extended joins on main_joint_tables for foreign tables that hold different meaning depending on which table they are joined with, and then everything is joined into 1 table as given by the relationships on "db_forced_rel"
 CreateOneJointTable <- function(main_joint_tables, db_fields, db_forced_rel, con = db$con, Verbose = TRUE, get_sql_query = TRUE) {
   ColsFromDbFields <-
     db_fields %>%
@@ -108,7 +108,21 @@ CreateOneJointTable <- function(main_joint_tables, db_fields, db_forced_rel, con
                   by = (CurRightColName %>% set_names(names(db_forced_rel)[i])),
                   copy = FALSE
         ) %>%
-        mutate(!!CurRightColName := !!(rlang::sym(names(db_forced_rel)[i])))
+        mutate(!!CurRightColName := !!names(db_forced_rel)[i])
+        # mutate(!!CurRightColName := !!(rlang::sym(names(db_forced_rel)[i])))
+        # mutate_(CurRightColName %>% names(db_forced_rel)[i])
+
+      #There's a bug in dbplyr where single-quote SELECT arguments are created when mutate() is called
+      #e.g. SELECT 'Table2' AS "Table1"
+      #This can cause the SQL code to fail either as is or when more mutate/joins are created.
+      #This is a temporary patch that replaces ' with "
+      tmpBugHelper <- joint_table %>% dbplyr_to_sql()
+      NewTbl <- NULL
+      if (tmpBugHelper %>% stringr::str_count("'.*?' AS") > 0) {
+        NewTbl <- tmpBugHelper %>% ReplaceStringWithStringRegEx("'(.*?)'", '"\\1"')
+      }
+      if (is.not.null(NewTbl)) joint_table <- tbl(con, sql(NewTbl))
+
 
       selected_cols <- data.frame(raw = colnames(joint_table),
                                   clean = sub("^([^.]*).*", "\\1", colnames(joint_table)),
@@ -188,12 +202,11 @@ created_joint_table <- function(db_fields, db_forced_rel, con = db$con, Verbose 
 
 #' Create Extended Main Joint Tables
 #'
-#' Get 1 table containing the information that main_joint_tables contained joined as given in "db_forced_rel" WITH or WITHOUT Renames as given by "db_TablesForColumnRenaming"
+#' Get 1 table containing the information that main_joint_tables contained joined as given in "db_forced_rel" WITH or WITHOUT Renames as given by "db_ColumnsOldNamesToNewNames"
 #' @param db_fields A DF with columns: "Include, KeyType, Table, Column, Type, RelationshipWithTable, RelationshipWithColumn, Transformation, Comment" about the User Selected fields and Relationships
 #' @param con is a dbConnect {DBI} connection object to a SQL Database
 #' @param db_forced_rel A Named String Vector. The vector names MUST point to the main table to be used for the 1-Joint-Table as its LHS. e.g. c(Hours_SiteID = "Site_SiteID", Hours_EmployeeID = "Employee_ID")
-#' @param db_TablesForColumnRenaming A string Vector. The names of the tables that need renaming
-#' @param db_ColumnsOldNamesToNewNames A names List. Names correspond to the Table names, and the vectors inside will be used to renamed SQL Columns starting with db_ColumnsOldNamesToNewNames[i][j] to db_ColumnsOldNamesToNewNames[i][j+1] with j going from 1 to length of db_ColumnsOldNamesToNewNames[i] by 2
+#' @param db_ColumnsOldNamesToNewNames A named List. Names correspond to the Table names, and the vectors inside will be used to renamed SQL Columns starting with db_ColumnsOldNamesToNewNames[i][j] to db_ColumnsOldNamesToNewNames[i][j+1] with j going from 1 to length of db_ColumnsOldNamesToNewNames[i] by 2
 #' @param Verbose A Boolean. Verbose = TRUE will output the consecutive joins as they happen
 #' @param get_sql_query A Boolean. get_sql_query = TRUE will create/edit the db$sql_main_joint_tables that output the SQL Code for the tables
 #' @keywords SQL Join JointTable OneJointTable
@@ -204,7 +217,6 @@ created_joint_table <- function(db_fields, db_forced_rel, con = db$con, Verbose 
 #' joint_table_With_extended_joins <-
 #'   create_extended_joint_table(db_fields,
 #'                               db_forced_rel = c(Hours_SiteID = "Site_SiteID", Hours_EmployeeID = "Employee_ID"),
-#'                               db_TablesForColumnRenaming = c("DIM_Employee"),
 #'                               db_ColumnsOldNamesToNewNames =
 #'                                 list(
 #'                                      DIM_Employee = c(
@@ -214,8 +226,8 @@ created_joint_table <- function(db_fields, db_forced_rel, con = db$con, Verbose 
 #'                               )
 #'
 #' print(joint_table_Without_extended_joins)
-#' #Renames as given by "db_TablesForColumnRenaming", create extended joins on main_joint_tables for foreign tables that hold different meaning depending on which table they are joined with, and then everything is joined into 1 table as given by the relationships on "db_forced_rel"
-create_extended_joint_table <- function(db_fields, db_forced_rel, db_TablesForColumnRenaming, db_ColumnsOldNamesToNewNames, con = db$con, Verbose = TRUE, get_sql_query = FALSE) {
+#' #Renames as given by "db_ColumnsOldNamesToNewNames", create extended joins on main_joint_tables for foreign tables that hold different meaning depending on which table they are joined with, and then everything is joined into 1 table as given by the relationships on "db_forced_rel"
+create_extended_joint_table <- function(db_fields, db_forced_rel, db_ColumnsOldNamesToNewNames, con = db$con, Verbose = TRUE, get_sql_query = FALSE) {
   joint_table_With_extended_joins <-
     CreateMainJointTables(db_fields = db_fields,
                           db_forced_rel = db_forced_rel,
@@ -226,7 +238,6 @@ create_extended_joint_table <- function(db_fields, db_forced_rel, db_TablesForCo
                           ) %>%
     CreateExtendedMainJointTables(db_fields = db_fields,
                                   db_forced_rel = db_forced_rel,
-                                  db_TablesForColumnRenaming = db_TablesForColumnRenaming,
                                   db_ColumnsOldNamesToNewNames = db_ColumnsOldNamesToNewNames,
                                   con = con,
                                   DeselectKeysIfIncludeFalse = FALSE,

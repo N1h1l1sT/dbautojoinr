@@ -98,12 +98,36 @@ CreateMainJointTables <- function(db_fields, db_forced_rel, con = db$con, Desele
         tbl(con, RightSideTablesNames[j]) %>%
         select(!!(NeededRightCols))
 
+      # AuxBy <- RightSideColsNames[j] %>% set_names(leftByCol)
       main_joint_tables[[curTableName]] <- main_joint_tables[[curTableName]] %>%
         left_join(curRightTab,                  #and join this table with its relationship-table as defined on db_fields.csv
                   by = (RightSideColsNames[j] %>% set_names(leftByCol)),
                   copy = FALSE
         ) %>%
-        mutate(!!RightSideColsNames[j] := !!(rlang::sym(leftByCol)))
+        #rename_(.dots = (RightSideColsNames[j] %>% set_names(leftByCol))) #IT's not a mutate - you lose the 1 Column
+        #mutate_(RightSideColsNames[j] %>% set_names(leftByCol)) #Produces '""' columns and SQL code fails
+        # main_joint_tables[[curTableName]] %>% mutate_(.dots = ("Site_ID" == "Hours_SiteID")) #
+        # main_joint_tables[[curTableName]] %>% mutate(Site_ID = Hours_SiteID) %>% dbplyr_to_sql()
+        # main_joint_tables[[curTableName]] %>% mutate_("Site_ID" == "Hours_SiteID") #
+        # mutate_(.dots = (RightSideColsNames[j] == leftByCol)) #
+        # mutate_(.dots = RightSideColsNames[j] = leftByCol) #Error: unexpected '=' in:
+        # mutate_(.dots = RightSideColsNames[j] %>% set_names(leftByCol)) #"Site_ID" AS "Hours_SiteID" instead of selecting them both
+        # mutate_(AuxBy) #
+        mutate(!!RightSideColsNames[j] := !!leftByCol)
+        #select_(RightSideColsNames[j] %>% set_names(leftByCol)) #Removes Columns
+
+      #There's a bug in dbplyr where single-quote SELECT arguments are created when mutate() is called
+      #e.g. SELECT 'Table2' AS "Table1"
+      #This can cause the SQL code to fail either as is or when more mutate/joins are created.
+      #This is a temporary patch that replaces ' with "
+      tmpBugHelper <- main_joint_tables[[curTableName]] %>% dbplyr_to_sql()
+      NewTbl <- NULL
+      if (tmpBugHelper %>% stringr::str_count("'.*?' AS") > 0) {
+        NewTbl <- tmpBugHelper %>% ReplaceStringWithStringRegEx("'(.*?)'", '"\\1"')
+      }
+      if (is.not.null(NewTbl)) main_joint_tables[[curTableName]] <- tbl(con, sql(NewTbl))
+
+      # dbplyr_to_sql(main_joint_tables[[curTableName]])
       if (get_sql_query) db$sql_main_joint_tables[[curTableName]] <- dbplyr_to_sql(main_joint_tables[[curTableName]], con)
     }
   }

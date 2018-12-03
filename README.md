@@ -108,18 +108,17 @@ joint_table_Without_extended_joins <-
 
 #### Getting the extended_main_joint_tables
 
-###### _From hereinafter we need to have configured the db_TablesForColumnRenaming and db_ColumnsOldNamesToNewNames variables with the renaming schema so that when the same table is joined with different Main tables, the column names change to reflect the different meaning_
+###### _From hereinafter we need to have configured the db_ColumnsOldNamesToNewNames variable with the renaming schema so that when the same table is joined with different Main tables, the column names change to reflect the different meaning_
 
 ```r
 #DIM_Site will be joined with DIM_Employee, but also with FACT_Hours.
 #An employee will work on a certain site each day, which might be different from day to day,
 #but the original site he is assigned to will always remain the same - his Main Site.
 #DIM_Site holds the Site information, so when it's joined with DIM_Employee, its meaning is the employees Main Site
-#However, when it's joined with FACT_Hours, its meaning is the site in which the employee has worked on that particular day.
+#However, when it's joined with FACT_Hours, its meaning is the site in which the employee has worked on at that particular day.
 #If we are to create a 1-Joint-Table, then the SQL columns cannot have the same name. So we're renaming the columns that
 #that come from the DIM_Site table and joined with DIM_Employee into MainSite_[SomeName] instead of Site_[SomeName]
 #On the final table (1-Joint-Table) MainSite_ID column will refer to the Site that the employee is assigned to, and Site_ID will refer to the one which he worked that particular day
-db_TablesForColumnRenaming <- c("DIM_Employee")
 
 db_ColumnsOldNamesToNewNames <-
   list(
@@ -131,13 +130,11 @@ db_ColumnsOldNamesToNewNames <-
 extended_main_joint_tables <-
   create_extended_main_joint_tables(db_fields = db_fields,
                                     db_forced_rel = db_forced_rel,
-                                    db_TablesForColumnRenaming = db_TablesForColumnRenaming,
                                     db_ColumnsOldNamesToNewNames = db_ColumnsOldNamesToNewNames
                                     )
 ```
 New Arguments:
-  * **db_TablesForColumnRenaming**: A string Vector. The names of the tables that need renaming
-  * **db_ColumnsOldNamesToNewNames**: A names List. Names correspond to the Table names, and the vectors inside will be used to renamed SQL Columns starting with `db_ColumnsOldNamesToNewNames[i][j]` to `db_ColumnsOldNamesToNewNames[i][j+1]` with j going from 1 to length of `db_ColumnsOldNamesToNewNames[i]` by 2
+  * **db_ColumnsOldNamesToNewNames**: A named List. Names correspond to the Table names, and the vectors inside will be used to renamed SQL Columns starting with `db_ColumnsOldNamesToNewNames[i][j]` to `db_ColumnsOldNamesToNewNames[i][j+1]` with j going from 1 to length of `db_ColumnsOldNamesToNewNames[i]` by 2
 
 
 #### Getting the joint_table_With_extended_joins
@@ -146,7 +143,6 @@ New Arguments:
 joint_table_With_extended_joins <-
   create_extended_joint_table(db_fields = db_fields,
                               db_forced_rel = db_forced_rel,
-                              db_TablesForColumnRenaming = db_TablesForColumnRenaming,
                               db_ColumnsOldNamesToNewNames = db_ColumnsOldNamesToNewNames
                               )
 
@@ -209,10 +205,9 @@ db_forced_rel <-
 ```
 
 
-* db_ColumnsOldNamesToNewNames is only needed if a table is to be joined to more than 1 table, as it is the case with DIM_Site which will be joined with DIM_Employee & FACT_Hours.
+* db_ColumnsOldNamesToNewNames is only needed if a certain table is to be joined to more than 1 table, as it is the case with DIM_Site which will be joined with DIM_Employee & FACT_Hours.
 
 ```r
-db_TablesForColumnRenaming <- c("DIM_Employee")
 db_ColumnsOldNamesToNewNames <-
   list(
     DIM_Employee = c(
@@ -246,7 +241,6 @@ extended_main_joint_tables <-
                         ) %>%
   CreateExtendedMainJointTables(db_fields,
                                 db_forced_rel,
-                                db_TablesForColumnRenaming,
                                 db_ColumnsOldNamesToNewNames,
                                 db$con,
                                 DeselectKeysIfIncludeFalse = TRUE,
@@ -291,7 +285,6 @@ joint_table_With_extended_joins <-
                         ) %>%
   CreateExtendedMainJointTables(db_fields,
                                 db_forced_rel,
-                                db_TablesForColumnRenaming,
                                 db_ColumnsOldNamesToNewNames,
                                 db$con,
                                 DeselectKeysIfIncludeFalse = FALSE,
@@ -321,8 +314,8 @@ sapply(names(extended_main_joint_tables), function(x) NCOL(extended_main_joint_t
 
 print(c(joint_table = NCOL(joint_table_Without_extended_joins), joint_table_extended = NCOL(joint_table_With_extended_joins)))
 # Number of Columns on the 2 Fully Joint Tables, withand without extended joins
-         joint_table joint_table_extended 
-                   7                    9 
+#    joint_table joint_table_extended 
+#           7            9 
 
 ```
 

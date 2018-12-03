@@ -21,7 +21,7 @@ CreateOneJointTable(main_joint_tables, db_fields, db_forced_rel,
 \item{get_sql_query}{A Boolean. get_sql_query = TRUE will create/edit the db$sql_main_joint_tables that output the SQL Code for the tables}
 }
 \description{
-Get 1 table containing the information that main_joint_tables contained joined as given in "db_forced_rel" WITH or WITHOUT Renames as given by "db_TablesForColumnRenaming"
+Get 1 table containing the information that main_joint_tables contained joined as given in "db_forced_rel" WITH or WITHOUT Renames as given by "db_ColumnsOldNamesToNewNames"
 }
 \examples{
 db_forced_rel <- c(Hours_SiteID = "Site_SiteID", Hours_EmployeeID = "Employee_ID")
@@ -42,7 +42,7 @@ joint_table_With_extended_joins <-
   CreateOneJointTable(db_fields, db$con, db_forced_rel)
 
 print(joint_table_Without_extended_joins)
-#Renames as given by "db_TablesForColumnRenaming", create extended joins on main_joint_tables for foreign tables that hold different meaning depending on which table they are joined with, and then everything is joined into 1 table as given by the relationships on "db_forced_rel"
+#Renames as given by "db_ColumnsOldNamesToNewNames", create extended joins on main_joint_tables for foreign tables that hold different meaning depending on which table they are joined with, and then everything is joined into 1 table as given by the relationships on "db_forced_rel"
 }
 \keyword{Join}
 \keyword{JointTable}
