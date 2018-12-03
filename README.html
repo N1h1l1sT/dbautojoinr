@@ -188,7 +188,7 @@ Otherwise this parameter can be null <code>db_forced_rel &lt;- NULL</code>.</li>
     )
   )
 </code></pre>
-<h4 id="get-the-main-tables">4. Get the Main Tables</h4>
+<h4 id="get-the-main-tables">5. Get the Main Tables</h4>
 <pre><code class="language-r">main_joint_tables &lt;-
   CreateMainJointTables(db_fields,
                         db_forced_rel,
@@ -198,7 +198,7 @@ Otherwise this parameter can be null <code>db_forced_rel &lt;- NULL</code>.</li>
                         get_sql_query = FALSE
                         )
 </code></pre>
-<h4 id="get-the-extended-main-tables">5. Get the Extended Main Tables</h4>
+<h4 id="get-the-extended-main-tables">6. Get the Extended Main Tables</h4>
 <pre><code class="language-r">extended_main_joint_tables &lt;-
   CreateMainJointTables(db_fields,
                         db_forced_rel,
@@ -220,7 +220,7 @@ Otherwise this parameter can be null <code>db_forced_rel &lt;- NULL</code>.</li>
 The 1st one (<code>CreateMainJointTables</code>) will retrieve the Main Tables, whilst the 2nd (<code>CreateExtendedMainJointTables</code>) does the extended joins (in our case, it joins <code>main_joint_tables[[DIM_Employee]].[MainSite_ID]</code> with <code>[DIM_Site].[Site_ID]</code> )
 Now, you might want to proceed with this long way if you want to also make custom transformations to some table before the next joining level occurs.
 <strong>Be careful with DeselectKeysIfIncludeFalse which must always be FALSE prior to the last level and always TRUE at the last one.</strong></p>
-<h4 id="get-the-1-joint-table-no-renaming-or-extended-joins">6. Get the 1-Joint-Table (No renaming or extended joins)</h4>
+<h4 id="get-the-1-joint-table-no-renaming-or-extended-joins">7. Get the 1-Joint-Table (No renaming or extended joins)</h4>
 <pre><code class="language-r">joint_table_Without_extended_joins &lt;-
   CreateMainJointTables(db_fields,
                         db_forced_rel,
@@ -236,7 +236,7 @@ Now, you might want to proceed with this long way if you want to also make custo
                       get_sql_query = FALSE
                       )
 </code></pre>
-<h4 id="get-the-1-joint-table-with-extended-joins">7. Get the 1-Joint-Table with Extended Joins</h4>
+<h4 id="get-the-1-joint-table-with-extended-joins">8. Get the 1-Joint-Table with Extended Joins</h4>
 <pre><code class="language-r">joint_table_With_extended_joins &lt;-
   CreateMainJointTables(db_fields,
                         db_forced_rel,
@@ -260,7 +260,7 @@ Now, you might want to proceed with this long way if you want to also make custo
                       get_sql_query = FALSE
                       )
 </code></pre>
-<h4 id="looking-at-the-results">8. Looking at the results</h4>
+<h4 id="looking-at-the-results">9. Looking at the results</h4>
 <pre><code class="language-r">sapply(names(main_joint_tables), function(x) NCOL(main_joint_tables[[x]]))
 # Number of Columns on the tables of main_joint_tables
 #    DIM_Site DIM_Employee   FACT_Hours 

@@ -227,7 +227,7 @@ db_ColumnsOldNamesToNewNames <-
   )
 ```
 
-#### 4. Get the Main Tables
+#### 5. Get the Main Tables
 
 ```r
 main_joint_tables <-
@@ -240,7 +240,7 @@ main_joint_tables <-
                         )
 ```
 
-#### 5. Get the Extended Main Tables
+#### 6. Get the Extended Main Tables
 ```r
 extended_main_joint_tables <-
   CreateMainJointTables(db_fields,
@@ -266,7 +266,7 @@ Now, you might want to proceed with this long way if you want to also make custo
 **Be careful with DeselectKeysIfIncludeFalse which must always be FALSE prior to the last level and always TRUE at the last one.** 
 
 
-#### 6. Get the 1-Joint-Table (No renaming or extended joins)
+#### 7. Get the 1-Joint-Table (No renaming or extended joins)
 ```r
 joint_table_Without_extended_joins <-
   CreateMainJointTables(db_fields,
@@ -284,7 +284,7 @@ joint_table_Without_extended_joins <-
                       )
 ```
 
-#### 7. Get the 1-Joint-Table with Extended Joins
+#### 8. Get the 1-Joint-Table with Extended Joins
 ```r
 joint_table_With_extended_joins <-
   CreateMainJointTables(db_fields,
@@ -310,7 +310,7 @@ joint_table_With_extended_joins <-
                       )
 ```
 
-#### 8. Looking at the results
+#### 9. Looking at the results
 
 ```r
 sapply(names(main_joint_tables), function(x) NCOL(main_joint_tables[[x]]))
