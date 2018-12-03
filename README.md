@@ -7,7 +7,7 @@
 ```r
 if (!("devtools" %in% rownames(installed.packages()))) install.packages("devtools", repos = "https://cloud.r-project.org")
 library(devtools)
-if (!("dbautojoinr" %in% rownames(installed.packages()))) install_github("N1h1l1sT/dbautojoinr")
+if (!("dbautojoinr" %in% rownames(installed.packages()))) install_github("N1h1l1sT/dbautojoinr", upgrade = FALSE)
 library(dbautojoinr)
 ```
 
@@ -166,7 +166,7 @@ The SQL Relationships also already exist on your SQL Database, so you won't need
 ```r
 if (!("devtools" %in% rownames(installed.packages()))) install.packages("devtools", repos = "https://cloud.r-project.org")
 library(devtools)
-if (!("dbautojoinr" %in% rownames(installed.packages()))) install_github("N1h1l1sT/dbautojoinr")
+if (!("dbautojoinr" %in% rownames(installed.packages()))) install_github("N1h1l1sT/dbautojoinr", upgrade = FALSE)
 library(dbautojoinr)
 
 db_fields_path <- paste0(getwd(), "/db_fields.csv")
