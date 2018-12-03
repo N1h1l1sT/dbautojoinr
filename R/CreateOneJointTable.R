@@ -119,7 +119,7 @@ CreateOneJointTable <- function(main_joint_tables, db_fields, db_forced_rel, con
       tmpBugHelper <- joint_table %>% dbplyr_to_sql()
       NewTbl <- NULL
       if (tmpBugHelper %>% stringr::str_count("'.*?' AS") > 0) {
-        NewTbl <- tmpBugHelper %>% ReplaceStringWithStringRegEx("'(.*?)'", '"\\1"')
+        NewTbl <- tmpBugHelper %>% ReplaceStringWithStringRegEx("'(.*?)' AS", '"\\1" AS')
       }
       if (is.not.null(NewTbl)) joint_table <- tbl(con, sql(NewTbl))
 
