@@ -158,7 +158,7 @@ First execute _Database Creation.sql_ and then execute _Data Population.sql_.
 Now you have a "dbautojoinr" SQL Database on your SQL Server with 4 tables (DIM_Employee, DIM_Region, DIM_Site, and FACT_Hours) and with data populated on those tables.
 The SQL Relationships also already exist on your SQL Database, so you won't need to explicitly impose them on the Initialisation code.
 
-![alt text](https://github.com/N1h1l1sT/dbautojoinr/blob/master/SQL/dbautojoinr-sql-database.png?raw=true "Populated SQL Database")
+![Populated SQL Database](https://github.com/N1h1l1sT/dbautojoinr/blob/master/SQL/dbautojoinr-sql-database.png?raw=true "Populated SQL Database")
 
 
 #### 2. Install and Initialise dbautojoinr
@@ -189,10 +189,21 @@ show_ER_diagramme(db$dm_f) #Shows the SQL Database ER Diagramme
 
 ```
 
-![alt text](https://github.com/N1h1l1sT/dbautojoinr/blob/master/SQL/dbautojoinr-er-diagramme.png?raw=true "dbautojoinr ER Diagramme")
+![dbautojoinr ER Diagramme](https://github.com/N1h1l1sT/dbautojoinr/blob/master/SQL/dbautojoinr-er-diagramme.png?raw=true "dbautojoinr ER Diagramme")
 
 
-#### 3. Set needed parameters
+#### 3. Select only the SQL Columns that you want to view
+
+
+```r
+db_fields <- edit_db_fields(db_fields)
+write_db_fields_csv(db_fields, db_fields_path)
+
+```
+
+![Feature Selection](https://github.com/N1h1l1sT/dbautojoinr/blob/master/SQL/edit_db_fields_feature_selection.png?raw=true "Feature Selection")
+
+#### 4. Set needed parameters
 
 * db_forced_rel is only needed if we don't just want the Main Tables joined, but we want to end up with just 1 table with everything else joined.
 Otherwise this parameter can be null `db_forced_rel <- NULL`.
