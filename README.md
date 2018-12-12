@@ -17,6 +17,8 @@ ___
 ###### _There's a working demo playing out a use-case, complete with the SQL Database and R code used to auto-join the SQL Database. You can either skip to the written demo below, or click **this link** to watch the demo on YouTube, or continue reading below for the how-to-use general tutorial_
 ___
 
+## Known issues
+* On R 3.5.x the list of tbl() (usually main_joint_tables) seems to produce an error showing some SQL Code and does not return the SQL Tables as Dataframes. However, if you go through the tables using `explain()` or `dbplyr_to_sql()` you'll see the SQL code actually works and returns the SQL Table (on SSMS for instance, or using `tbl(db$con, sql(main_joint_tables$DIM_Employee %>% dbplyr_to_sql()))`.) I'm unsure as to why this happens, but it's not an issue on R versions below 3.5.x
 
 ## Initialisation
 

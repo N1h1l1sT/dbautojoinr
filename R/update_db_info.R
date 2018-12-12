@@ -109,14 +109,14 @@ update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connectio
   #
   # } else { #Creating a Data Model Diagram for the SQL Database from the glimpses
   #   cat("\nNo relationships found on the SQL Database, relying on what has been typed manually\n")
-  #   db$dm_f <- dm_from_data_frames(db$lst_glimpses)
+  #   db$dm_f <- datamodelr::dm_from_data_frames(db$lst_glimpses)
   #
   #   #Inserting the Relationships into the ER Diagram
   #   #                            MainTable$Ref == OtherTable$Identity
-  #   # db$dm_f <- dm_add_references(db$dm_f,
+  #   # db$dm_f <- datamodelr::dm_add_references(db$dm_f,
   #   #                           TBL_IMPORT$IM_ID == SomeTable$SomeID,
   #   # )
-  #   db$dm_f <- dm_add_references(db$dm_f, ...
+  #   db$dm_f <- datamodelr::dm_add_references(db$dm_f, ...
   #   )
   #
   # }
@@ -131,7 +131,7 @@ update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connectio
       MissingTables <- (db$lst_glimpses %>% names())[(db$lst_glimpses %>% names()) %notin% db$dm_f$tables$table]
 
       NewModelDF <- db$dm_f$columns %>% as_data_frame()
-      AdditionalRows <- dm_from_data_frames(db$lst_glimpses[MissingTables])$columns %>% as_data_frame()
+      AdditionalRows <- datamodelr::dm_from_data_frames(db$lst_glimpses[MissingTables])$columns %>% as_data_frame()
       NewModelDF %<>% rbind(tibble(table = AdditionalRows$table,
                                    column = AdditionalRows$column,
                                    key = AdditionalRows$key,
@@ -149,7 +149,7 @@ update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connectio
 
   } else {                                                     #Creating a Data Model Diagram for the SQL Database from the glimpses
     cat("\nNo relationships found on the SQL Database (or something prevented searching for them)\n")
-    db$dm_f <- dm_from_data_frames(db$lst_glimpses)
+    db$dm_f <- datamodelr::dm_from_data_frames(db$lst_glimpses)
   }
 
 
@@ -157,10 +157,10 @@ update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connectio
     cat("Adding user-defiend relationships (if applicable)\n")
     #Inserting the Relationships into the ER Diagram
     #                            MainTable$Ref == OtherTable$Identity
-    # db$dm_f <- dm_add_references(db$dm_f,
+    # db$dm_f <- datamodelr::dm_add_references(db$dm_f,
     #                           TBL_IMPORT$IM_ID == SomeTable$SomeID,
     # )
-    db$dm_f <- dm_add_references(db$dm_f, ...
+    db$dm_f <- datamodelr::dm_add_references(db$dm_f, ...
     )
   }
 

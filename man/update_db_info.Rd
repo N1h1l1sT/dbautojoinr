@@ -5,7 +5,8 @@
 \title{Creates the db Environment and the SQL Connection (db$con)}
 \usage{
 update_db_info(Driver, Database, Server, UID, PWD, Trusted_Connection,
-  Port = 1433, ...)
+  Port = 1433, ..., ReadRelationshipsFromDB = TRUE,
+  AddUserRelationships = TRUE)
 }
 \arguments{
 \item{Driver}{A string. A SQL Driver, etc.: {SQL Server};}

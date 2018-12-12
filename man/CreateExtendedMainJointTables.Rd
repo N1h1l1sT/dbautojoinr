@@ -7,7 +7,7 @@
 CreateExtendedMainJointTables(main_joint_tables, db_fields, db_forced_rel,
   db_ColumnsOldNamesToNewNames, con = db$con,
   DeselectKeysIfIncludeFalse = TRUE, Verbose = TRUE,
-  get_sql_query = FALSE)
+  get_sql_query = TRUE)
 }
 \arguments{
 \item{main_joint_tables}{A named list of tibbles/DFs (usually given by CreateMainJointTables() as a SQL DB Pointer containing all user-selected fields plus needed ones for joins}

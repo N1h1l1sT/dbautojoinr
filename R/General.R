@@ -44,7 +44,6 @@ inspectVar <- function(x, BasicOnly = TRUE) {
 #' as.data_model.data.frame() is taken from bergant's datamodelr v0.2.1. Unfortunately it's not publically exposed and I need it so I'm importing it. All credit to bergant for this
 #' Coerce a data frame to a data model
 #'
-#' @keywords internal
 #' @export
 as.data_model.data.frame <- function(x) {
 
@@ -76,7 +75,7 @@ as.data_model.data.frame <- function(x) {
 
 
   # create references from ref and keys
-  ref_table <- dm_create_references(x)
+  ref_table <- datamodelr::dm_create_references(x)
 
   table_attrs <- attr(x, "tables")
   if(is.null(table_attrs)) {
@@ -95,5 +94,5 @@ as.data_model.data.frame <- function(x) {
     columns = x,
     references = ref_table
   )
-  as.data_model(ret)
+  datamodelr::as.data_model(ret)
 }
