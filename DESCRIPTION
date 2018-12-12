@@ -1,7 +1,7 @@
 Type: Package
 Package: dbautojoinr
 Title: Automatic Joining of SQL Tables
-Version: 0.1.6.9000
+Version: 0.1.6.9001
 Authors@R: c(
 	person("Ioannis", "Mamalikidis", email = "Giannis_Mamalikidis@msn.com", role = c("aut", "cre")),
 	person("Anestis", "Fachantidis", role = "aut")
@@ -25,7 +25,5 @@ Depends:
 	purrr (>= 0.2.5),
 	tractor.base (>= 3.2.2),
 	shiny (>= 1.2.0),
-	rhandsontable (>= 0.3.7),
-	processx (>= 3.2.1),
-	callr (>= 3.1.0)
+	rhandsontable (>= 0.3.7)
 RoxygenNote: 6.1.1

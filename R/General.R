@@ -41,10 +41,9 @@ inspectVar <- function(x, BasicOnly = TRUE) {
 
 }
 
-#' as.data_model.data.frame() is taken from bergant's datamodelr v0.2.1. Unfortunately it's not publically exposed and I need it so I'm importing it. All credit to bergant for this
-#' Coerce a data frame to a data model
-#'
-#' @export
+# as.data_model.data.frame() is taken from bergant's datamodelr v0.2.1.
+# Unfortunately it's not publically exposed and I need it so I'm importing it.
+# All credit to bergant for this.
 as.data_model.data.frame <- function(x) {
 
   if(!inherits(x, "data.frame")) stop("Not a data.frame")
