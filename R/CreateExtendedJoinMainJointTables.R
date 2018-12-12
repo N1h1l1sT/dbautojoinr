@@ -38,7 +38,7 @@
 #'
 #' print(joint_table_With_extended_joins)
 CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, db_forced_rel, db_ColumnsOldNamesToNewNames, con = db$con,
-                                          DeselectKeysIfIncludeFalse = TRUE, Verbose = TRUE, get_sql_query = FALSE
+                                          DeselectKeysIfIncludeFalse = TRUE, Verbose = TRUE, get_sql_query = TRUE
 ) {
   ColsFromDbFields <-
     db_fields %>%
@@ -199,6 +199,7 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, db_force
     }
     if (get_sql_query) db$sql_main_joint_tables[[TableNames[[i]]]] <- dbplyr_to_sql(main_joint_tables[[TableNames[[i]]]], con)
   }
+
   return(main_joint_tables)
 }
 
@@ -226,7 +227,7 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, db_force
 #'                                     )
 #'
 #' print(extended_main_joint_tables)
-create_extended_main_joint_tables <- function(db_fields, db_forced_rel, db_ColumnsOldNamesToNewNames, con = db$con, Verbose = TRUE, get_sql_query = FALSE) {
+create_extended_main_joint_tables <- function(db_fields, db_forced_rel, db_ColumnsOldNamesToNewNames, con = db$con, Verbose = TRUE, get_sql_query = TRUE) {
   extended_main_joint_tables <-
   CreateMainJointTables(db_fields = db_fields,
                         db_forced_rel = db_forced_rel,

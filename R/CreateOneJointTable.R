@@ -158,6 +158,7 @@ CreateOneJointTable <- function(main_joint_tables, db_fields, db_forced_rel, con
     if (get_sql_query) db$sql_joint_table <- dbplyr_to_sql(joint_table, con)
 
   }
+
   return(joint_table)
 }
 
@@ -182,7 +183,7 @@ CreateOneJointTable <- function(main_joint_tables, db_fields, db_forced_rel, con
 #' print(joint_table_Without_extended_joins)
 #' #No renames are used and therefore no extended joins.
 #' #This assumes that all tables can be joined together without any 1 table being needed twice.
-created_joint_table <- function(db_fields, db_forced_rel, con = db$con, Verbose = TRUE, get_sql_query = FALSE) {
+created_joint_table <- function(db_fields, db_forced_rel, con = db$con, Verbose = TRUE, get_sql_query = TRUE) {
   joint_table_without_extended_joins <-
   CreateMainJointTables(db_fields = db_fields,
                         db_forced_rel = db_forced_rel,
@@ -227,7 +228,7 @@ created_joint_table <- function(db_fields, db_forced_rel, con = db$con, Verbose 
 #'
 #' print(joint_table_Without_extended_joins)
 #' #Renames as given by "db_ColumnsOldNamesToNewNames", create extended joins on main_joint_tables for foreign tables that hold different meaning depending on which table they are joined with, and then everything is joined into 1 table as given by the relationships on "db_forced_rel"
-create_extended_joint_table <- function(db_fields, db_forced_rel, db_ColumnsOldNamesToNewNames, con = db$con, Verbose = TRUE, get_sql_query = FALSE) {
+create_extended_joint_table <- function(db_fields, db_forced_rel, db_ColumnsOldNamesToNewNames, con = db$con, Verbose = TRUE, get_sql_query = TRUE) {
   joint_table_With_extended_joins <-
     CreateMainJointTables(db_fields = db_fields,
                           db_forced_rel = db_forced_rel,

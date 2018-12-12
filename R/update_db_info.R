@@ -78,13 +78,13 @@ initialise_return_db_fields <- function(csv_path, Driver, Database, Server, UID,
 #'                                     DIM_Employee$Employee_MainSiteMainObjekt_SiteID == DIM_Site$Site_SiteID,
 #'                                     DIM_Site$Site_RegionID == DIM_Region$Region_ID
 #'                                     )
-update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connection, Port = 1433, ...) {
+update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connection, Port = 1433, ..., ReadRelationshipsFromDB = TRUE, AddUserRelationships = TRUE) {
   db$con <- connect_odbc(Driver, Database, Server, UID, PWD, Trusted_Connection, Port)
   #odbcClose(db$con)
 
   #Retrieving the names of all the tables starting with DIM or FACT
   db$db_tables_names <- dbListTables(db$con) %>%
-    grep("^(DIM|FACT)", .) %>%
+    grep("^(DIM_|FACT_|TBL_)", .) %>%
     dbListTables(db$con)[.]
 
   #Getting a glimpse of all the tables
@@ -94,7 +94,7 @@ update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connectio
     for (SQLTableCurNum in 1:length(db$db_tables_names)) {
       db$lst_glimpses[[db$db_tables_names[[SQLTableCurNum]]]] <-
         glimpse(tbl(db$con, db$db_tables_names[[SQLTableCurNum]])) %>%
-        as.data.frame()
+        collect()
     }
   }
 
@@ -102,14 +102,59 @@ update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connectio
   sQuery <- datamodelr::dm_re_query("sqlserver") #TODO Implementations for non SQL Server databases as well (Postrgre already exists on package, see website)
   DataModel <- DBI::dbGetQuery(db$con, sQuery) %>% collect() %>% as.data.frame(stringsAsFactors = FALSE)
 
-  if (any(!is.na(DataModel$ref))) { #Retrieving the Data Model Diagram from the Database
-    cat("\nRelationships found on the SQL Database, we're ignoring manually written ones and rely on what is shown on the SQL Database\n")
+  # ### OLD
+  # if (any(!is.na(DataModel$ref))) { #Retrieving the Data Model Diagram from the Database
+  #   cat("\nRelationships found on the SQL Database, we're ignoring manually written ones and rely on what is shown on the SQL Database\n")
+  #   db$dm_f <- datamodelr::as.data_model(DataModel)
+  #
+  # } else { #Creating a Data Model Diagram for the SQL Database from the glimpses
+  #   cat("\nNo relationships found on the SQL Database, relying on what has been typed manually\n")
+  #   db$dm_f <- dm_from_data_frames(db$lst_glimpses)
+  #
+  #   #Inserting the Relationships into the ER Diagram
+  #   #                            MainTable$Ref == OtherTable$Identity
+  #   # db$dm_f <- dm_add_references(db$dm_f,
+  #   #                           TBL_IMPORT$IM_ID == SomeTable$SomeID,
+  #   # )
+  #   db$dm_f <- dm_add_references(db$dm_f, ...
+  #   )
+  #
+  # }
+
+  ### NEW
+  if (ReadRelationshipsFromDB && any(!is.na(DataModel$ref))) { #Retrieving the Data Model Diagram from the Database
+    cat("\nRelationships found on the SQL Database\n")
     db$dm_f <- datamodelr::as.data_model(DataModel)
 
-  } else { #Creating a Data Model Diagram for the SQL Database from the glimpses
-    cat("\nNo relationships found on the SQL Database, relying on what has been typed manually\n")
-    db$dm_f <- dm_from_data_frames(db$lst_glimpses)
+    #When reading from the SQL Database we're not just getting the tables we selected on db$db_tables_names, and also we're not getting the VIEWS.
+    if (db$dm_f$tables$table %>% NROW() != db$lst_glimpses %>% names() %>% NROW() || any((db$lst_glimpses %>% names()) %notin% db$dm_f$tables$table)) {
+      MissingTables <- (db$lst_glimpses %>% names())[(db$lst_glimpses %>% names()) %notin% db$dm_f$tables$table]
 
+      NewModelDF <- db$dm_f$columns %>% as_data_frame()
+      AdditionalRows <- dm_from_data_frames(db$lst_glimpses[MissingTables])$columns %>% as_data_frame()
+      NewModelDF %<>% rbind(tibble(table = AdditionalRows$table,
+                                   column = AdditionalRows$column,
+                                   key = AdditionalRows$key,
+                                   ref = AdditionalRows$ref,
+                                   ref_col = NA,
+                                   mandatory = 0,
+                                   type = NA,
+                                   max_length = NA,
+                                   precision = NA,
+                                   scale = NA))
+
+      db$dm_f <- as.data_model.data.frame(NewModelDF)
+
+    }
+
+  } else {                                                     #Creating a Data Model Diagram for the SQL Database from the glimpses
+    cat("\nNo relationships found on the SQL Database (or something prevented searching for them)\n")
+    db$dm_f <- dm_from_data_frames(db$lst_glimpses)
+  }
+
+
+  if (AddUserRelationships) {
+    cat("Adding user-defiend relationships (if applicable)\n")
     #Inserting the Relationships into the ER Diagram
     #                            MainTable$Ref == OtherTable$Identity
     # db$dm_f <- dm_add_references(db$dm_f,
@@ -117,7 +162,6 @@ update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connectio
     # )
     db$dm_f <- dm_add_references(db$dm_f, ...
     )
-
   }
 
   #Defining Database Variables
