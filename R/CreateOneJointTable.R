@@ -108,21 +108,7 @@ CreateOneJointTable <- function(main_joint_tables, db_fields, db_forced_rel, con
                   by = (CurRightColName %>% set_names(names(db_forced_rel)[i])),
                   copy = FALSE
         ) %>%
-        mutate(!!CurRightColName := !!names(db_forced_rel)[i])
-        # mutate(!!CurRightColName := !!(rlang::sym(names(db_forced_rel)[i])))
-        # mutate_(CurRightColName %>% names(db_forced_rel)[i])
-
-      #There's a bug in dbplyr where single-quote SELECT arguments are created when mutate() is called
-      #e.g. SELECT 'Table2' AS "Table1"
-      #This can cause the SQL code to fail either as is or when more mutate/joins are created.
-      #This is a temporary patch that replaces ' with "
-      tmpBugHelper <- joint_table %>% dbplyr_to_sql()
-      NewTbl <- NULL
-      if (tmpBugHelper %>% stringr::str_count("'.*?' AS") > 0) {
-        NewTbl <- tmpBugHelper %>% ReplaceStringWithStringRegEx("'(.*?)' AS", '"\\1" AS')
-      }
-      if (is.not.null(NewTbl)) joint_table <- tbl(con, sql(NewTbl))
-
+        mutate(!! sym(CurRightColName) := !! sym(names(db_forced_rel)[i]))
 
       selected_cols <- data.frame(raw = colnames(joint_table),
                                   clean = sub("^([^.]*).*", "\\1", colnames(joint_table)),
