@@ -86,63 +86,86 @@ CreateOneJointTable <- function(main_joint_tables, db_fields, db_forced_rel, con
     }
 
     if (Verbose) cat("\n\n")
-    joint_table <- main_joint_tables[[NewTabNames[which(NewColNames == names(db_forced_rel[1]))]]]
-    for (i in 1:NROW(db_forced_rel)) {
-      CurRightTableName <- db$db_all_tabs[match(as.character(db_forced_rel[[i]]), db$db_all_cols)]
-      CurRightColName <- as.character(db_forced_rel[i])
-      RightColNames <- colnames(main_joint_tables[[CurRightTableName]])
-      if (Verbose) cat(paste0("i = ", i, ". Join on: [", "joint_table", "].[", names(db_forced_rel)[i], "] = main_joint_tables[[", CurRightTableName, "]].[", CurRightColName,"]\n"))
 
-      DuplicateColumnsToRem <-
-        RightColNames[RightColNames %in% colnames(joint_table)] %>%
-        {.[. %notin% CurRightColName]}
+    if (!((names(db_forced_rel) %in% NewColNames) %>% any())) {
+      stop("All of the tables for Forced-Join are missing, unable to continue")
 
-      RightTabForJoin <- main_joint_tables[[CurRightTableName]]
-      if (NROW(DuplicateColumnsToRem) > 0) {
-        RightTabForJoin %<>%
-          select(-!!(DuplicateColumnsToRem))
+    } else {
+      CurLeftTableName <- NewTabNames[which(NewColNames == names(db_forced_rel[1]))]
+      if ((names(db_forced_rel) %in% NewColNames) %>% any()) {
+        while (NROW(CurLeftTableName) == 0) {
+          db_forced_rel <- db_forced_rel[c(2:NROW(db_forced_rel), 1)]
+          CurLeftTableName <- NewTabNames[which(NewColNames == names(db_forced_rel[1]))]
+        }
       }
 
-      joint_table %<>%
-        left_join(RightTabForJoin,
-                  by = (CurRightColName %>% set_names(names(db_forced_rel)[i])),
-                  copy = FALSE
-        ) %>%
-        mutate(!! sym(CurRightColName) := !! sym(names(db_forced_rel)[i]))
+      if (NROW(CurLeftTableName) > 0 && CurLeftTableName %in% names(main_joint_tables)) {
+        joint_table <- main_joint_tables[[CurLeftTableName]]
+        for (i in 1:NROW(db_forced_rel)) {
+          CurRightTableName <- db$db_all_tabs[match(as.character(db_forced_rel[[i]]), db$db_all_cols)]
+          CurRightColName <- as.character(db_forced_rel[i])
+          RightColNames <- colnames(main_joint_tables[[CurRightTableName]])
 
-      selected_cols <- data.frame(raw = colnames(joint_table),
-                                  clean = sub("^([^.]*).*", "\\1", colnames(joint_table)),
-                                  stringsAsFactors = FALSE
-      ) %>%
-        group_by(clean) %>%
-        summarize(translated = max(raw)) %>%
-        pull(translated) %>%
-        {colnames(joint_table)[colnames(joint_table) %in% .]}
+          if (NROW(CurRightTableName) > 0 && CurRightTableName %in% names(main_joint_tables)) {
+            if (Verbose) cat(paste0("i = ", i, ". Join on: [", "joint_table", "].[", names(db_forced_rel)[i], "] = main_joint_tables[[", CurRightTableName, "]].[", CurRightColName,"]\n"))
 
-      renamed_cols <- stri_replace_all_fixed(selected_cols, ".y", "")
+            DuplicateColumnsToRem <-
+              RightColNames[RightColNames %in% colnames(joint_table)] %>%
+              {.[. %notin% CurRightColName]}
 
-      if (NROW(colnames(joint_table)) != NROW(renamed_cols) || any(colnames(joint_table) != renamed_cols)) {
-        joint_table %<>%
-          select_(.dots = selected_cols %>% set_names(renamed_cols))
+            RightTabForJoin <- main_joint_tables[[CurRightTableName]]
+            if (NROW(DuplicateColumnsToRem) > 0) {
+              RightTabForJoin %<>%
+                select(-!!(DuplicateColumnsToRem))
+            }
+
+            joint_table %<>%
+              left_join(RightTabForJoin,
+                        by = (CurRightColName %>% set_names(names(db_forced_rel)[i])),
+                        copy = FALSE
+              ) %>%
+              mutate(!! sym(CurRightColName) := !! sym(names(db_forced_rel)[i]))
+
+            selected_cols <- data.frame(raw = colnames(joint_table),
+                                        clean = sub("^([^.]*).*", "\\1", colnames(joint_table)),
+                                        stringsAsFactors = FALSE
+            ) %>%
+              group_by(clean) %>%
+              summarize(translated = max(raw)) %>%
+              pull(translated) %>%
+              {colnames(joint_table)[colnames(joint_table) %in% .]}
+
+            renamed_cols <- stri_replace_all_fixed(selected_cols, ".y", "")
+
+            if (NROW(colnames(joint_table)) != NROW(renamed_cols) || any(colnames(joint_table) != renamed_cols)) {
+              joint_table %<>%
+                select_(.dots = selected_cols %>% set_names(renamed_cols))
+            }
+            # if (get_sql_query) db$sql_joint_table <- dbplyr_to_sql(joint_table, con) #If left inside the loop, it can be used for debugging purposes, too.
+          } else {
+            cat("The Right table to join with the One-Joint-Table (", CurRightTableName, ") seems to be missing, skipping it.\n")
+          }
+
+        }
+
+        included_cols <-
+          c(
+            ColsFromDbFields[ColsFromDbFields %in% colnames(joint_table)],
+            db$NeededRenamedColNames[db$NeededRenamedColNames %in% colnames(joint_table)]
+          ) %>%
+          unique() %>%
+          {colnames(joint_table)[colnames(joint_table) %in% .]}
+
+        if (NROW(colnames(joint_table)) != NROW(included_cols) || any(colnames(joint_table) != included_cols)) {
+          joint_table %<>%
+            select(one_of(!!(included_cols)))
+        }
+        if (get_sql_query) db$sql_joint_table <- dbplyr_to_sql(joint_table, con)
+
+      } else {
+        cat("The Left table to start the creation of the One-Joint-Table seems (", CurLeftTableName, ") to be missing.\n")
       }
-      # if (get_sql_query) db$sql_joint_table <- dbplyr_to_sql(joint_table, con) #If left inside the loop, it can be used for debugging purposes, too.
-
     }
-
-    included_cols <-
-      c(
-        ColsFromDbFields[ColsFromDbFields %in% colnames(joint_table)],
-        db$NeededRenamedColNames[db$NeededRenamedColNames %in% colnames(joint_table)]
-      ) %>%
-      unique() %>%
-      {colnames(joint_table)[colnames(joint_table) %in% .]}
-
-    if (NROW(colnames(joint_table)) != NROW(included_cols) || any(colnames(joint_table) != included_cols)) {
-      joint_table %<>%
-        select(one_of(!!(included_cols)))
-    }
-    if (get_sql_query) db$sql_joint_table <- dbplyr_to_sql(joint_table, con)
-
   }
 
   return(joint_table)

@@ -50,7 +50,7 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, db_force
   ### For example, if an employee is employed by a certain Building (his Main Building) but also works ###
   ### on others too. So DIM_Employee will have a BuildingID AND FACT_Work will have a BuildingID too   ###
   ########################################################################################################
-  db$NeededRenamedColNames <- NULL    #Used in order to select() only Include==Yes at the end of 1-Joint-Table
+  db$NeededRenamedColNames <- NULL #Used in order to select() only Include==Yes at the end of 1-Joint-Table
   OldNamesToForceJoin <- NULL      #Used in order to Join Renamed Columns with foreign tables as well #NROW = NROW(db_forced_rel)
   NewNamesToForceJoin <- NULL      #Used in order to Join Renamed Columns with foreign tables as well #NROW = NROW(db_forced_rel)
   OldAndNewTabToForceJoin <- NULL  #Used in order to Join Renamed Columns with foreign tables as well #NROW = NROW(db_forced_rel)
@@ -59,34 +59,38 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, db_force
     CurColNames <- colnames(main_joint_tables[[curTableName]])
     OldAndNewNames <- db_ColumnsOldNamesToNewNames[[curTableName]]
 
-    AllOldColNames <- NULL
-    AllNewColNames <- NULL
-    for (i in seq(1, NROW(OldAndNewNames), by = 2)) {
-      OldStartsWith <- OldAndNewNames[[i]]
-      NewStartsWith <- OldAndNewNames[[i + 1]]
+    if (is.not.null(CurColNames) && NROW(CurColNames) > 0) {
+      AllOldColNames <- NULL
+      AllNewColNames <- NULL
+      for (i in seq(1, NROW(OldAndNewNames), by = 2)) {
+        OldStartsWith <- OldAndNewNames[[i]]
+        NewStartsWith <- OldAndNewNames[[i + 1]]
 
-      iColsNeedingChange <- startsWith(CurColNames, OldStartsWith) %>% which()
-      if (NROW(iColsNeedingChange) > 0) {
-        OldColNames <- CurColNames[iColsNeedingChange]
-        NewColNames <- sapply(OldColNames, ReplaceStartWithSthElse, StartsWith = OldStartsWith, ReplaceWith = NewStartsWith, USE.NAMES = FALSE)
-        AllOldColNames <- c(AllOldColNames, OldColNames)
-        AllNewColNames <- c(AllNewColNames, NewColNames)
+        iColsNeedingChange <- startsWith(CurColNames, OldStartsWith) %>% which()
+        if (NROW(iColsNeedingChange) > 0) {
+          OldColNames <- CurColNames[iColsNeedingChange]
+          NewColNames <- sapply(OldColNames, ReplaceStartWithSthElse, StartsWith = OldStartsWith, ReplaceWith = NewStartsWith, USE.NAMES = FALSE)
+          AllOldColNames <- c(AllOldColNames, OldColNames)
+          AllNewColNames <- c(AllNewColNames, NewColNames)
+        }
+
+        iNeededRenamedColNames <- OldColNames %in% (CurColNames[CurColNames %in% ColsFromDbFields])
+        db$NeededRenamedColNames <- c(db$NeededRenamedColNames, NewColNames[iNeededRenamedColNames])
+
+        iNamesToForceJoin <- OldColNames %in% as.character(db_forced_rel)
+        OldNamesToForceJoin <- c(OldNamesToForceJoin, OldColNames[iNamesToForceJoin])
+        NewNamesToForceJoin <- c(NewNamesToForceJoin, NewColNames[iNamesToForceJoin])
+        OldAndNewTabToForceJoin <- c(OldAndNewTabToForceJoin, curTableName)
       }
 
-      iNeededRenamedColNames <- OldColNames %in% (CurColNames[CurColNames %in% ColsFromDbFields])
-      db$NeededRenamedColNames <- c(db$NeededRenamedColNames, NewColNames[iNeededRenamedColNames])
-
-      iNamesToForceJoin <- OldColNames %in% as.character(db_forced_rel)
-      OldNamesToForceJoin <- c(OldNamesToForceJoin, OldColNames[iNamesToForceJoin])
-      NewNamesToForceJoin <- c(NewNamesToForceJoin, NewColNames[iNamesToForceJoin])
-      OldAndNewTabToForceJoin <- c(OldAndNewTabToForceJoin, curTableName)
-    }
-
-    if (NROW(AllOldColNames) > 0) {
-      main_joint_tables[[curTableName]] %<>%
-        dplyr::rename_(
-          .dots = AllOldColNames %>% set_names(AllNewColNames)
-        )
+      if (NROW(AllOldColNames) > 0) {
+        main_joint_tables[[curTableName]] %<>%
+          dplyr::rename_(
+            .dots = AllOldColNames %>% set_names(AllNewColNames)
+          )
+      }
+    } else {
+      cat("The '", curTableName, "' table which was to have its Column Names renamed does not exist on the List of SQL Tables. Skipping this and moving on.\n")
     }
   }
 
