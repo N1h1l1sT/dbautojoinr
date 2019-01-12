@@ -93,19 +93,22 @@ CreateMainJointTables <- function(db_fields, db_forced_rel, con = db$con, Desele
       if (Verbose) cat(paste0("j = ", j, "\nJoin on: [",
                               curTableName, "].[", leftByCol, "] = [",
                               RightSideTablesNames[j], "].[", RightSideColsNames[j],"]\n"))
+      if(NROW(NeededRightCols > 0) && NROW(iRightAllNeededTabs > 0)) {
+        curRightTab <-
+          tbl(con, RightSideTablesNames[j]) %>%
+          select(!!(NeededRightCols))
 
-      curRightTab <-
-        tbl(con, RightSideTablesNames[j]) %>%
-        select(!!(NeededRightCols))
+        main_joint_tables[[curTableName]] <- main_joint_tables[[curTableName]] %>%
+          left_join(curRightTab,                  #and join this table with its relationship-table as defined on db_fields.csv
+                    by = (RightSideColsNames[j] %>% set_names(leftByCol)),
+                    copy = FALSE
+          ) %>%
+          mutate(!! sym(RightSideColsNames[j]) := !! sym(leftByCol))
 
-      main_joint_tables[[curTableName]] <- main_joint_tables[[curTableName]] %>%
-        left_join(curRightTab,                  #and join this table with its relationship-table as defined on db_fields.csv
-                  by = (RightSideColsNames[j] %>% set_names(leftByCol)),
-                  copy = FALSE
-        ) %>%
-        mutate(!! sym(RightSideColsNames[j]) := !! sym(leftByCol))
-
-      if (get_sql_query) db$sql_main_joint_tables[[curTableName]] <- dbplyr_to_sql(main_joint_tables[[curTableName]], con)
+        if (get_sql_query) db$sql_main_joint_tables[[curTableName]] <- dbplyr_to_sql(main_joint_tables[[curTableName]], con)
+      } else {
+        cat("The Foreign table that ", curTableName, " was supposed to be joined with seems to have been eliminated as not-needed by the User Selections on db_fields. Moving to next join.\n")
+      }
     }
   }
 
