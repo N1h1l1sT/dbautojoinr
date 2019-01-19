@@ -32,6 +32,7 @@ show_ER_diagramme <- function(DataModel = db$dm_f, GraphDirection = "RL") {
 #' @param ExcludeAuditingFields. A Boolean. If TRUE, any SQL Columns ending with "_OrigEntryOn", "_OrigEntryBy", "_EntryOn", "_EntryBy", "_CompName", "_Remote" or "_Username" will have INCLUDE == FALSE by default
 #' @param ExcludeSYSDIAGRAMS. A Boolean. If TRUE, any SQL Columns on the table "sysdiagrams" will have INCLUDE == FALSE by default
 #' @param RegexToSelectTables. A String. It defaults to getting all SQL Tables whose name begins with DIM_, FACT_, or TBL_.
+#' @param UpdateDBFieldsFromDBCon A Boolean. If set to TRUE, then the db_fields saved on the file will be updated to reflect any changes in the SQL Database (removal or addition of Columns and Tables). User options are kept.
 #' @keywords create db_fields dbfields
 #' @export
 #' @examples
@@ -49,19 +50,19 @@ show_ER_diagramme <- function(DataModel = db$dm_f, GraphDirection = "RL") {
 #'                                          table1$FKcolumn2 == table2$IDcolumn1,
 #'                                          table1$FKcolumn3 == table3$IDcolumn1
 #'                                          )
-initialise_return_db_fields <- function(csv_path, Driver, Database, Server, UID, PWD, Trusted_Connection, Port, ...,
+initialise_return_db_fields <- function(csv_path, Driver, Database, Server, UID, PWD, Trusted_Connection, Port = 1433, ...,
                                         ForceCreate_csv = FALSE, ExcludeIdentities = FALSE, ExcludeForeignKeys = TRUE, Update_DBEnv_DBFields = FALSE,
-                                        ExcludeAuditingFields = FALSE, ExcludeSYSDIAGRAMS = TRUE, RegexToSelectTables = "^(DIM_|FACT_|TBL_)") {
+                                        ExcludeAuditingFields = FALSE, ExcludeSYSDIAGRAMS = TRUE, RegexToSelectTables = "^(DIM_|FACT_|TBL_)", UpdateDBFieldsFromDBCon = FALSE) {
   .GlobalEnv$db <- new.env()
   zinternal_update_db_info(Driver, Database, Server, UID, PWD, Trusted_Connection, Port, ..., RegexToSelectTables = RegexToSelectTables)
 
   if (!ForceCreate_csv && file.exists(csv_path)) {
     cat(paste0("\nReading db_fields from: ", csv_path, "\n\n"))
-    db_fields <- read_db_fields_csv(csv_path)
+    db_fields <- read_db_fields_csv(csv_path, Update_DBEnv_DBFields, UpdateDBFieldsFromDBCon, ExcludeIdentities, ExcludeForeignKeys, ExcludeAuditingFields, ExcludeSYSDIAGRAMS)
   } else {
     cat(paste0("\n'", csv_path, "' does not exist.\nCalling zinternal_create_default_db_fields_from_db_con()\n"))
     db_fields <- zinternal_create_default_db_fields_from_db_con(csv_path, ExcludeIdentities, ExcludeForeignKeys,
-                                                                Update_DBEnv_DBFields = FALSE, ExcludeAuditingFields = ExcludeAuditingFields, ExcludeSYSDIAGRAMS = ExcludeSYSDIAGRAMS)
+                                                                Update_DBEnv_DBFields = FALSE, ExcludeAuditingFields, ExcludeSYSDIAGRAMS)
   }
 
   if (Update_DBEnv_DBFields == TRUE) db$db_fields <- db_fields
@@ -381,17 +382,22 @@ update_db_fields_from_db_con <- function(csv_path, csv_output = NULL, ExcludeIde
 #' @examples
 #' db_fields <- read_db_fields_csv("db_fields.csv")
 read_db_fields_csv <- function(csv_path, Update_DBEnv_DBFields = FALSE, UpdateDBFieldsFromDBCon = FALSE, ExcludeIdentities = FALSE, ExcludeForeignKeys = TRUE, ExcludeAuditingFields = FALSE, ExcludeSYSDIAGRAMS = TRUE) {
-  db_fields <-
-    read.csv(csv_path,
-             header = TRUE,
-             colClasses = c("KeyType" = "character", "Table" = "character", "Column" = "character", "Type" = "character",
-                            "Comment" = "character", "RelationshipWithTable" = "character", "RelationshipWithColumn" = "character",
-                            "Transformation" = "character"), stringsAsFactors = FALSE) %>%
-    as_tibble()
-  db_fields$Include %<>%
-    factor(levels = c("Yes", "No", "N/A"))
 
-  if (UpdateDBFieldsFromDBCon) update_db_fields_from_db_con(csv_path, csv_output = NULL, ExcludeIdentities, ExcludeForeignKeys, Update_DBEnv_DBFields = FALSE, ExcludeAuditingFields, ExcludeSYSDIAGRAMS)
+  if (UpdateDBFieldsFromDBCon) {
+    db_fields <-
+      update_db_fields_from_db_con(csv_path, csv_output = NULL, ExcludeIdentities, ExcludeForeignKeys, Update_DBEnv_DBFields = FALSE, ExcludeAuditingFields, ExcludeSYSDIAGRAMS)
+  } else {
+    db_fields <-
+      read.csv(csv_path,
+               header = TRUE,
+               colClasses = c("KeyType" = "character", "Table" = "character", "Column" = "character", "Type" = "character",
+                              "Comment" = "character", "RelationshipWithTable" = "character", "RelationshipWithColumn" = "character",
+                              "Transformation" = "character"), stringsAsFactors = FALSE) %>%
+      as_tibble()
+
+    db_fields$Include %<>%
+      factor(levels = c("Yes", "No", "N/A"))
+  }
 
   if (Update_DBEnv_DBFields) db$db_fields <- db_fields
   return(db_fields)
