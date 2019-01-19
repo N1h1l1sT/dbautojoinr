@@ -7,14 +7,14 @@
 # #lstTables[[FACT_Work]] row = another work related entry (1 employee has worked many times i.e. many rows)
 # #lstTables[[DIM_Employee]] row = an employee. 1 and only 1 row per employee
 # extended_main_joint_tables <-
-#   CreateMainJointTables(db_fields, db_forced_rel, FALSE, db$con) %>%
-#   CreateExtendedMainJointTables(db_fields, db$con, c("DIM_Employee"), list(DIM_Employee = c(c("Site_", "MainSite_"))))
+#   create_main_joint_tables(db_fields, db_forced_rel, FALSE, db$con) %>%
+#   zinternal_CreateExtendedMainJointTables(db_fields, db$con, c("DIM_Employee"), list(DIM_Employee = c(c("Site_", "MainSite_"))))
 # #Yields List of Tables
 
 #' Create Extended Main Joint Tables
 #'
 #' Get a list of all the Main tables in the database joined with all their relationships, Renaming Columns in certain tables according to "db_ColumnsOldNamesToNewNames" and then joining the renamed columns according to the relationship that exists on "db_forced_rel" for original column name (IF it exists). This way, if, for instance, both lstTables[[DIM_Employee]] and lstTables[[FACT_Work]] reference lstTables[[DIM_Site]], then Site can be renamed to MainSite and Extended_Join on lstTables[[DIM_Employee]] as this table refers to the main/base Site of the Employee, whilst lstTables[[FACT_Work]] refers to the Site the employee worked on at that point of time (row).
-#' @param main_joint_tables A named list of tibbles/DFs (usually given by CreateMainJointTables() as a SQL DB Pointer containing all user-selected fields plus needed ones for joins
+#' @param main_joint_tables A named list of tibbles/DFs (usually given by create_main_joint_tables() as a SQL DB Pointer containing all user-selected fields plus needed ones for joins
 #' @param db_fields A DF with columns: "Include, KeyType, Table, Column, Type, RelationshipWithTable, RelationshipWithColumn, Transformation, Comment" about the User Selected fields and Relationships
 #' @param con is a dbConnect {DBI} connection object to a SQL Database
 #' @param db_forced_rel A Named String Vector. The vector names MUST point to the main table to be used for the 1-Joint-Table as its LHS
@@ -25,8 +25,8 @@
 #' @export
 #' @examples
 #' extended_main_joint_tables <-
-#'   CreateMainJointTables(db_fields, db_forced_rel, FALSE, db$con) %>%
-#'   CreateExtendedMainJointTables(db_fields, db$con,
+#'   create_main_joint_tables(db_fields, db_forced_rel, FALSE, db$con) %>%
+#'   zinternal_CreateExtendedMainJointTables(db_fields, db$con,
 #'                                 db_forced_rel = c(Hours_SiteID = "Site_SiteID", Hours_EmployeeID = "Employee_ID")
 #'                                 db_ColumnsOldNamesToNewNames =
 #'                                   list(
@@ -37,9 +37,7 @@
 #'                                 )
 #'
 #' print(joint_table_With_extended_joins)
-CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, db_forced_rel, db_ColumnsOldNamesToNewNames, con = db$con,
-                                          DeselectKeysIfIncludeFalse = TRUE, Verbose = TRUE, get_sql_query = TRUE
-) {
+zinternal_CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, db_forced_rel, db_ColumnsOldNamesToNewNames, con = db$con, DeselectKeysIfIncludeFalse = TRUE, Verbose = TRUE, get_sql_query = TRUE) {
   ColsFromDbFields <-
     db_fields %>%
     filter(Include == "Yes") %>%
@@ -186,9 +184,9 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, db_force
     }
   }
 
-  if (DeselectKeysIfIncludeFalse) { # MUST BE FALSE if we need to do any more joins (e.g. CreateOneJointTable())
-    TableNames <- names(main_joint_tables)
+  TableNames <- names(main_joint_tables)
 
+  if (DeselectKeysIfIncludeFalse) { # MUST BE FALSE if we need to do any more joins (e.g. zinternal_CreateOneJointTable())
     for (i in 1:NROW(TableNames)) {
       included_cols <-
         c(
@@ -201,7 +199,15 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, db_force
           select(one_of(!!(included_cols)))
       }
     }
-    if (get_sql_query) db$sql_main_joint_tables[[TableNames[[i]]]] <- dbplyr_to_sql(main_joint_tables[[TableNames[[i]]]], con)
+  }
+
+  if (get_sql_query) {
+    for (i in 1:NROW(TableNames)) {
+      db$sql_main_joint_tables[[TableNames[[i]]]] <- dbplyr_to_sql(main_joint_tables[[TableNames[[i]]]], con)
+    }
+
+    while (sum(search() == "db") > 0) detach(db)
+    attach(db)
   }
 
   return(main_joint_tables)
@@ -233,14 +239,14 @@ CreateExtendedMainJointTables <- function(main_joint_tables, db_fields, db_force
 #' print(extended_main_joint_tables)
 create_extended_main_joint_tables <- function(db_fields, db_forced_rel, db_ColumnsOldNamesToNewNames, con = db$con, Verbose = TRUE, get_sql_query = TRUE) {
   extended_main_joint_tables <-
-  CreateMainJointTables(db_fields = db_fields,
+  create_main_joint_tables(db_fields = db_fields,
                         db_forced_rel = db_forced_rel,
                         DeselectKeysIfIncludeFalse = FALSE,
                         con = db$con,
                         Verbose = Verbose,
                         get_sql_query = get_sql_query
                         ) %>%
-  CreateExtendedMainJointTables(db_fields = db_fields,
+  zinternal_CreateExtendedMainJointTables(db_fields = db_fields,
                                 con = db$con,
                                 db_forced_rel = db_forced_rel,
                                 db_ColumnsOldNamesToNewNames = db_ColumnsOldNamesToNewNames,

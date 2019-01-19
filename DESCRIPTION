@@ -1,7 +1,7 @@
 Type: Package
 Package: dbautojoinr
 Title: Automatic Joining of SQL Tables
-Version: 0.2.1.9002
+Version: 1.0.0
 Authors@R: c(
 	person("Ioannis", "Mamalikidis", email = "Giannis_Mamalikidis@msn.com", role = c("aut", "cre")),
 	person("Anestis", "Fachantidis", role = "aut")

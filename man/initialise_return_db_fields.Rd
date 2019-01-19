@@ -6,7 +6,10 @@
 \usage{
 initialise_return_db_fields(csv_path, Driver, Database, Server, UID, PWD,
   Trusted_Connection, Port, ..., ForceCreate_csv = FALSE,
-  ExcludeIdentities = FALSE, ExcludeForeignKeys = TRUE)
+  ExcludeIdentities = FALSE, ExcludeForeignKeys = TRUE,
+  Update_DBEnv_DBFields = FALSE, ExcludeAuditingFields = FALSE,
+  ExcludeSYSDIAGRAMS = TRUE,
+  RegexToSelectTables = "^(DIM_|FACT_|TBL_)")
 }
 \arguments{
 \item{csv_path}{A String. The path of the db_fields .csv file to read (or to be created if it doesn't exist)}
@@ -27,11 +30,19 @@ initialise_return_db_fields(csv_path, Driver, Database, Server, UID, PWD,
 
 \item{...}{If the relationships exist on the SQL Database, this can be left blank. Logical expressions for the SQL Relationships in the format: table1$FKcolumn1 == table2$IDcolumn5, table1$FKcolumn2 == table3$IDcolumn5, ...}
 
-\item{ForceCreate_csv}{A Boolean. If TRUE then even if the}
+\item{ForceCreate_csv}{A Boolean. If TRUE then even if the db_fields exist, it will be deleted and overwriten by a newly created default db_fields}
 
 \item{ExcludeIdentities}{A Boolean. The default inclusion behaviour for SQL Table Identities. If we're going to perform more joins afterwards or if we need to have a reference as to which table each column belongs to, then we shouldn't exclude them; if we only care about extrapolating information from each specific row, then we can exclude them by default and edit to include just the row identifier ID.}
 
 \item{ExcludeForeignKeys}{A Boolean. If we need to perform manual joins afterwards or keep a reference as to with which table there's a connection, then we need them; otherwise we can safely exclude them}
+
+\item{Update_DBEnv_DBFields}{A Boolean. If set to TRUE, you can have an internal main db_fields accessible via db$db_fields usually acting as the main db_fields. Default is FALSE as having local db_fields variables is the default behaviour.}
+
+\item{ExcludeAuditingFields.}{A Boolean. If TRUE, any SQL Columns ending with "_OrigEntryOn", "_OrigEntryBy", "_EntryOn", "_EntryBy", "_CompName", "_Remote" or "_Username" will have INCLUDE == FALSE by default}
+
+\item{ExcludeSYSDIAGRAMS.}{A Boolean. If TRUE, any SQL Columns on the table "sysdiagrams" will have INCLUDE == FALSE by default}
+
+\item{RegexToSelectTables.}{A String. It defaults to getting all SQL Tables whose name begins with DIM_, FACT_, or TBL_.}
 }
 \description{
 Creates the SQL Connection and creates/Reads the db_fields .csv file according to the db_fields standard and according to what the SQL database looks like

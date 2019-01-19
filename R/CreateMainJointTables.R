@@ -1,9 +1,9 @@
 # #Get a list of all the Main tables in the database joined with all their relationships with only Include == TRUE columns
 # main_joint_tables <-
-#   CreateMainJointTables(db_fields, c(Hours_SiteID = "Site_SiteID", Hours_EmployeeID = "Employee_ID"), TRUE, db$con)
+#   create_main_joint_tables(db_fields, c(Hours_SiteID = "Site_SiteID", Hours_EmployeeID = "Employee_ID"), TRUE, db$con)
 # #Yields List of Tables
 
-#' Create Extended Main Joint Tables
+#' Create Main Joint Tables
 #'
 #' Get a list of all the Main tables in the database joined with all their relationships with only Include == TRUE columns
 #' @param db_fields A DF with columns: "Include, KeyType, Table, Column, Type, RelationshipWithTable, RelationshipWithColumn, Transformation, Comment" about the User Selected fields and Relationships
@@ -16,11 +16,11 @@
 #' @export
 #' @examples
 #' main_joint_tables <-
-#'   CreateMainJointTables(db_fields, c(Hours_SiteID = "Site_SiteID", Hours_EmployeeID = "Employee_ID"), FALSE, db$con) %>%
+#'   create_main_joint_tables(db_fields, c(Hours_SiteID = "Site_SiteID", Hours_EmployeeID = "Employee_ID"), FALSE, db$con) %>%
 #'
 #' print(main_joint_tables)
-#' All the Main Tables (tables with foreign keys) are joined with their relationships and are returned as a list of tibbles (n = number of tabels with foreign keys that also contain User Selected fields)
-CreateMainJointTables <- function(db_fields, db_forced_rel, con = db$con, DeselectKeysIfIncludeFalse = TRUE, Verbose = TRUE, get_sql_query = TRUE) {
+#' All the Main Tables (tables with foreign keys) are joined with their relationships and are returned as a list of tibbles (n = number of tables with foreign keys that also contain User Selected fields)
+create_main_joint_tables <- function(db_fields, db_forced_rel, con = db$con, DeselectKeysIfIncludeFalse = TRUE, Verbose = TRUE, get_sql_query = TRUE) {
   #Selects TABLES according to db_fields
   #Assumptions: Database is in Canonical Form, No 2 columns have the same name (Usual good practice in Databases)
   #If there are ANY .x, .y variables created THEN it means one or more columns between Tables had the same name! (It' frowned upon)
@@ -76,7 +76,7 @@ CreateMainJointTables <- function(db_fields, db_forced_rel, con = db$con, Desele
       tbl(con, curTableName) %>%         #Retrieve the actual table Schema (SQL DB pointer)
       select(!!NeededLeftColsIndx)
 
-    if (get_sql_query) db$sql_main_joint_tables[[curTableName]] <- dbplyr_to_sql(main_joint_tables[[curTableName]], con)
+    #if (get_sql_query) db$sql_main_joint_tables[[curTableName]] <- dbplyr_to_sql(main_joint_tables[[curTableName]], con)
 
     for (j in 1:length(RightSideTablesNames)) {
       NeededRightCols <-
@@ -105,7 +105,7 @@ CreateMainJointTables <- function(db_fields, db_forced_rel, con = db$con, Desele
           ) %>%
           mutate(!! sym(RightSideColsNames[j]) := !! sym(leftByCol))
 
-        if (get_sql_query) db$sql_main_joint_tables[[curTableName]] <- dbplyr_to_sql(main_joint_tables[[curTableName]], con)
+        #if (get_sql_query) db$sql_main_joint_tables[[curTableName]] <- dbplyr_to_sql(main_joint_tables[[curTableName]], con)
       } else {
         cat("The Foreign table that ", curTableName, " was supposed to be joined with seems to have been eliminated as not-needed by the User Selections on db_fields. Moving to next join.\n")
       }
@@ -123,6 +123,8 @@ CreateMainJointTables <- function(db_fields, db_forced_rel, con = db$con, Desele
 
       main_joint_tables[[names(main_joint_tables)[[i]]]] %<>%
         select(one_of(!!(ColsToSelect)))
+
+      if (get_sql_query) db$sql_main_joint_tables[[names(main_joint_tables)[[i]]]] <- dbplyr_to_sql(main_joint_tables[[names(main_joint_tables)[[i]]]], con)
     }
   }
 

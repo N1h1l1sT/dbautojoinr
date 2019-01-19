@@ -1,17 +1,17 @@
 # #Get 1 table containing the information that main_joint_tables contained joined as given in "db_forced_rel"
 # #No renames and therefore no extended joins. This assumes that all tables can be joined together without any 1 table being needed twice
 # joint_table_Without_extended_joins <-
-#   CreateMainJointTables(db_fields, db_forced_rel, FALSE, db$con) %>%
-#   CreateOneJointTable(db_fields, db$con)
+#   create_main_joint_tables(db_fields, db_forced_rel, FALSE, db$con) %>%
+#   zinternal_CreateOneJointTable(db_fields, db$con)
 # #Yields a Table
 #
 # #Get 1 table containing the information that main_joint_tables contained joined as given in "db_forced_rel"
 # #Renames as given by "db_ColumnsOldNamesToNewNames", extended joins tables that hold different meaning depending on which table
 # #they are joined with, and then joins everything into 1 table as given by the relationships on "db_forced_rel"
 # joint_table_With_extended_joins <-
-#   CreateMainJointTables(db_fields, db_forced_rel, FALSE, db$con) %>%
-#   CreateExtendedMainJointTables(db_fields, db$con, c("DIM_Employee"), list(DIM_Employee = c(c("Site_", "MainSite_")))) %>%
-#   CreateOneJointTable(db_fields, db$con)
+#   create_main_joint_tables(db_fields, db_forced_rel, FALSE, db$con) %>%
+#   zinternal_CreateExtendedMainJointTables(db_fields, db$con, c("DIM_Employee"), list(DIM_Employee = c(c("Site_", "MainSite_")))) %>%
+#   zinternal_CreateOneJointTable(db_fields, db$con)
 # #Yields a Table
 
 ########################################################
@@ -20,7 +20,7 @@
 #!!CAUTION!!: If the unconventional relationships are not set correctly, OR wholly, OR possibly with a specific order, the joins may fail
 #The assumption is there's an order to this so that each consequent index can join with the first one after
 #the first one itself has been subject to all previous joins until each implied join up-until the current index
-#The order is set on Database.R::update_db_info::db_forced_rel and the initial table there will be the table used (Left) to join with everything else
+#The order is set on db_forced_rel and the initial table there will be the table used (Left) to join with everything else
 
 ### !Remember to put rename conventions on db_ColumnsOldNamesToNewNames to rename Columns in main_joint_tables that have the same name
 ###  between tables, but hold different information.
@@ -41,7 +41,7 @@
 #' Create Extended Main Joint Tables
 #'
 #' Get 1 table containing the information that main_joint_tables contained joined as given in "db_forced_rel" WITH or WITHOUT Renames as given by "db_ColumnsOldNamesToNewNames"
-#' @param main_joint_tables A named list of tibbles/DFs (usually given by CreateMainJointTables() as a SQL DB Pointer containing all user-selected fields plus needed ones for joins
+#' @param main_joint_tables A named list of tibbles/DFs (usually given by create_main_joint_tables() as a SQL DB Pointer containing all user-selected fields plus needed ones for joins
 #' @param db_fields A DF with columns: "Include, KeyType, Table, Column, Type, RelationshipWithTable, RelationshipWithColumn, Transformation, Comment" about the User Selected fields and Relationships
 #' @param con is a dbConnect {DBI} connection object to a SQL Database
 #' @param db_forced_rel A Named String Vector. The vector names MUST point to the main table to be used for the 1-Joint-Table as its LHS. e.g. c(Hours_SiteID = "Site_SiteID", Hours_EmployeeID = "Employee_ID")
@@ -53,8 +53,8 @@
 #' db_forced_rel <- c(Hours_SiteID = "Site_SiteID", Hours_EmployeeID = "Employee_ID")
 #' Example 1:
 #' joint_table_Without_extended_joins <-
-#'   CreateMainJointTables(db_fields, db_forced_rel, FALSE, db$con) %>%
-#'   CreateOneJointTable(db_fields, db$con, db_forced_rel)
+#'   create_main_joint_tables(db_fields, db_forced_rel, FALSE, db$con) %>%
+#'   zinternal_CreateOneJointTable(db_fields, db$con, db_forced_rel)
 #'
 #' print(joint_table_Without_extended_joins)
 #' #No renames are used and therefore no extended joins.
@@ -63,13 +63,13 @@
 #'
 #' Example 2:
 #' joint_table_With_extended_joins <-
-#'   CreateMainJointTables(db_fields, db_forced_rel, FALSE, db$con) %>%
-#'   CreateExtendedMainJointTables(db_fields, db$con, c("DIM_Employee"), db_forced_rel) %>%
-#'   CreateOneJointTable(db_fields, db$con, db_forced_rel)
+#'   create_main_joint_tables(db_fields, db_forced_rel, FALSE, db$con) %>%
+#'   zinternal_CreateExtendedMainJointTables(db_fields, db$con, c("DIM_Employee"), db_forced_rel) %>%
+#'   zinternal_CreateOneJointTable(db_fields, db$con, db_forced_rel)
 #'
 #' print(joint_table_Without_extended_joins)
 #' #Renames as given by "db_ColumnsOldNamesToNewNames", create extended joins on main_joint_tables for foreign tables that hold different meaning depending on which table they are joined with, and then everything is joined into 1 table as given by the relationships on "db_forced_rel"
-CreateOneJointTable <- function(main_joint_tables, db_fields, db_forced_rel, con = db$con, Verbose = TRUE, get_sql_query = TRUE) {
+zinternal_CreateOneJointTable <- function(main_joint_tables, db_fields, db_forced_rel, con = db$con, Verbose = TRUE, get_sql_query = TRUE) {
   ColsFromDbFields <-
     db_fields %>%
     filter(Include == "Yes") %>%
@@ -168,6 +168,11 @@ CreateOneJointTable <- function(main_joint_tables, db_fields, db_forced_rel, con
     }
   }
 
+  if (get_sql_query) {
+    while (sum(search() == "db") > 0) detach(db)
+    attach(db)
+  }
+
   return(joint_table)
 }
 
@@ -185,23 +190,23 @@ CreateOneJointTable <- function(main_joint_tables, db_fields, db_forced_rel, con
 #' Example:
 #' db_forced_rel <- c(Hours_SiteID = "Site_SiteID", Hours_EmployeeID = "Employee_ID")
 #' joint_table_Without_extended_joins <-
-#'   created_joint_table(db_fields,
+#'   create_joint_table(db_fields,
 #'                       db_forced_rel = c(Hours_SiteID = "Site_SiteID", Hours_EmployeeID = "Employee_ID"),
 #'                       )
 #'
 #' print(joint_table_Without_extended_joins)
 #' #No renames are used and therefore no extended joins.
 #' #This assumes that all tables can be joined together without any 1 table being needed twice.
-created_joint_table <- function(db_fields, db_forced_rel, con = db$con, Verbose = TRUE, get_sql_query = TRUE) {
+create_joint_table <- function(db_fields, db_forced_rel, con = db$con, Verbose = TRUE, get_sql_query = TRUE) {
   joint_table_without_extended_joins <-
-  CreateMainJointTables(db_fields = db_fields,
+  create_main_joint_tables(db_fields = db_fields,
                         db_forced_rel = db_forced_rel,
                         DeselectKeysIfIncludeFalse = FALSE, #False in this case because we're going to need the keys for the extended join
                         con = db$con,
                         Verbose = Verbose,
                         get_sql_query = get_sql_query
                         ) %>%
-  CreateOneJointTable(db_fields = db_fields,
+  zinternal_CreateOneJointTable(db_fields = db_fields,
                       con = db$con,
                       db_forced_rel = db_forced_rel,
                       Verbose = Verbose,
@@ -239,14 +244,14 @@ created_joint_table <- function(db_fields, db_forced_rel, con = db$con, Verbose 
 #' #Renames as given by "db_ColumnsOldNamesToNewNames", create extended joins on main_joint_tables for foreign tables that hold different meaning depending on which table they are joined with, and then everything is joined into 1 table as given by the relationships on "db_forced_rel"
 create_extended_joint_table <- function(db_fields, db_forced_rel, db_ColumnsOldNamesToNewNames, con = db$con, Verbose = TRUE, get_sql_query = TRUE) {
   joint_table_With_extended_joins <-
-    CreateMainJointTables(db_fields = db_fields,
+    create_main_joint_tables(db_fields = db_fields,
                           db_forced_rel = db_forced_rel,
                           con = con,
                           DeselectKeysIfIncludeFalse = FALSE,
                           Verbose = Verbose,
                           get_sql_query = get_sql_query
                           ) %>%
-    CreateExtendedMainJointTables(db_fields = db_fields,
+    zinternal_CreateExtendedMainJointTables(db_fields = db_fields,
                                   db_forced_rel = db_forced_rel,
                                   db_ColumnsOldNamesToNewNames = db_ColumnsOldNamesToNewNames,
                                   con = con,
@@ -254,7 +259,7 @@ create_extended_joint_table <- function(db_fields, db_forced_rel, db_ColumnsOldN
                                   Verbose = Verbose,
                                   get_sql_query = get_sql_query
                                   ) %>%
-    CreateOneJointTable(db_fields = db_fields,
+    zinternal_CreateOneJointTable(db_fields = db_fields,
                         db_forced_rel = db_forced_rel,
                         con = con,
                         Verbose = Verbose,
