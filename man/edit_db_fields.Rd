@@ -4,10 +4,12 @@
 \alias{edit_db_fields}
 \title{Edits a db_fields formatted DF}
 \usage{
-edit_db_fields(db_fields = db$db_fields)
+edit_db_fields(db_fields = db$db_fields, Update_DBEnv_DBFields = FALSE)
 }
 \arguments{
 \item{db_fields}{A DF. A dataframe formatted according to the db_fields standard.}
+
+\item{Update_DBEnv_DBFields}{A Boolean. If set to TRUE, you can have an internal main db_fields accessible via db$db_fields usually acting as the main db_fields. Default is FALSE as having local db_fields variables is the default behaviour.}
 }
 \description{
 Opens a browser window where the user can select which columns to include and see the relationships amongst the tables.

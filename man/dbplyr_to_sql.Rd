@@ -17,6 +17,5 @@ Retrieves the T-SQL code behind any Tbl even after R transformations
 \examples{
 dbplyr_to_sql(tbl("TableName", db$con) db$con)
 }
-\keyword{Diagram}
-\keyword{Diagramme}
-\keyword{ER}
+\keyword{SQL}
+\keyword{TSQL}

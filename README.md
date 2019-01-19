@@ -40,7 +40,15 @@ db_fields <- initialise_return_db_fields(csv_path = db_fields_path,
                                          Server = "123.456.78.9",
                                          UID = NULL,
                                          PWD = NULL,
-                                         Trusted_Connection = TRUE#,
+                                         Trusted_Connection = TRUE,
+                                         Port = 1433,
+                                         ForceCreate_csv = FALSE, #If TRUE then even if the db_fields exist, it will be deleted and overwriten by a newly created default db_fields
+                                         ExcludeIdentities = FALSE,
+                                         ExcludeForeignKeys = TRUE,
+                                         Update_DBEnv_DBFields = TRUE, #If TRUE and creating db_fields file, you can have an internal main db_fields accessible via db$db_fields usually acting as the main db_fields. Default is FALSE as having local db_fields variables is the default behaviour.
+                                         ExcludeAuditingFields = FALSE, #If TRUE and creating db_fields file, any SQL Columns ending with "_OrigEntryOn", "_OrigEntryBy", "_EntryOn", "_EntryBy", "_CompName", "_Remote" or "_Username" will have INCLUDE == FALSE by default
+                                         ExcludeSYSDIAGRAMS = TRUE, #If TRUE and creating db_fields file, any SQL Columns on the table "sysdiagrams" will have INCLUDE == FALSE by default
+                                         RegexToSelectTables = "^(DIM_|FACT_|TBL_)"#, #A regex that will get tables which you want to be deselected by default. As it is it matches all SQL Tables whose name begins with DIM_, FACT_, or TBL_
                                          #Table1$T1_ForeignKey1 == Table2$T2_ID, #Please notice that Foreign Keys are always
                                          #Table2$T2_ForeignKey1 == Table3$T3_ID, #on the left hand side, whilst IDs are always
                                          #Table4$T4_ForeignKey1 == Table2$T2_ID, #on the right hand side.
@@ -55,7 +63,7 @@ If the db_fields .csv file doesn't exist and it's created or if you set `ForceCr
 ## Select which SQL Columns you need
 
 ```r
-db_fields <- edit_db_fields(db_fields) #What the user selected is now saved on the db_fields variable (AND on db$db_fields).
+db_fields <- edit_db_fields(db_fields, Update_DBEnv_DBFields = TRUE) #What the user selected is now saved on the db_fields variable (AND on db$db_fields because Update_DBEnv_DBFields == TRUE).
 write_db_fields_csv(db_fields, db_fields_path) #For any run on the current session, the user preferences are assumed, but we need to save the file for future runs.
 ```
 
@@ -74,12 +82,11 @@ Depending on what you want to achieve, there are different levels of joining tha
 
 ```r
 main_joint_tables <-
-  CreateMainJointTables(db_fields = db_fields,
-                        db_forced_rel = NULL, #We don't want to Force any relationships to create a 1-JointTable, so db_forced_rel is NULL
-                        con = db$con,
-                        DeselectKeysIfIncludeFalse = TRUE
-                        )
-
+  create_main_joint_tables(db_fields = db_fields,
+                           db_forced_rel = NULL, #We don't want to Force any relationships to create a 1-JointTable, so db_forced_rel is NULL
+                           con = db$con,
+                           DeselectKeysIfIncludeFalse = TRUE
+                           )
 ```
 New Arguments:
   * **db_fields**: A DF with columns: "Include, KeyType, Table, Column, Type, RelationshipWithTable, RelationshipWithColumn, Transformation, Comment" about the User Selected fields and Relationships
@@ -102,7 +109,7 @@ db_forced_rel <-
   )
 
 joint_table_Without_extended_joins <-
-  created_joint_table(db_fields = db_fields,
+  create_joint_table(db_fields = db_fields,
                       db_forced_rel = db_forced_rel)
 
 ```
@@ -151,6 +158,7 @@ joint_table_With_extended_joins <-
 ```
 
 #### **And that is all! You've now officially gotten all the different possible levels of joining. Hurray!**
+
 
 # Demo
 
@@ -233,7 +241,7 @@ db_ColumnsOldNamesToNewNames <-
 
 ```r
 main_joint_tables <-
-  CreateMainJointTables(db_fields,
+  create_main_joint_tables(db_fields,
                         db_forced_rel,
                         db$con,
                         DeselectKeysIfIncludeFalse = TRUE, #No need to make any other joins, so let's only get what the User selected
@@ -245,14 +253,14 @@ main_joint_tables <-
 #### 6. Get the Extended Main Tables
 ```r
 extended_main_joint_tables <-
-  CreateMainJointTables(db_fields,
+  create_main_joint_tables(db_fields,
                         db_forced_rel,
                         db$con,
                         DeselectKeysIfIncludeFalse = FALSE,
                         Verbose = TRUE,
                         get_sql_query = FALSE
                         ) %>%
-  CreateExtendedMainJointTables(db_fields,
+  zinternal_CreateExtendedMainJointTables(db_fields,
                                 db_forced_rel,
                                 db_ColumnsOldNamesToNewNames,
                                 db$con,
@@ -263,7 +271,7 @@ extended_main_joint_tables <-
 ```
 
 You've probably noticed that instead of using `create_extended_main_joint_tables` to get the result, we're now using 2 different functions that each performs 1 step.
-The 1st one (`CreateMainJointTables`) will retrieve the Main Tables, whilst the 2nd (`CreateExtendedMainJointTables`) does the extended joins (in our case, it joins `main_joint_tables[[DIM_Employee]].[MainSite_ID]` with `[DIM_Site].[Site_ID]` )
+The 1st one (`create_main_joint_tables`) will retrieve the Main Tables, whilst the 2nd (`zinternal_CreateExtendedMainJointTables`) does the extended joins (in our case, it joins `main_joint_tables[[DIM_Employee]].[MainSite_ID]` with `[DIM_Site].[Site_ID]` )
 Now, you might want to proceed with this long way if you want to also make custom transformations to some table before the next joining level occurs.
 **Be careful with DeselectKeysIfIncludeFalse which must always be FALSE prior to the last level and always TRUE at the last one.** 
 
@@ -271,14 +279,14 @@ Now, you might want to proceed with this long way if you want to also make custo
 #### 7. Get the 1-Joint-Table (No renaming or extended joins)
 ```r
 joint_table_Without_extended_joins <-
-  CreateMainJointTables(db_fields,
+  create_main_joint_tables(db_fields,
                         db_forced_rel,
                         db$con,
                         DeselectKeysIfIncludeFalse = FALSE,
                         Verbose = TRUE,
                         get_sql_query = FALSE
                         ) %>%
-  CreateOneJointTable(db_fields,
+  zinternal_CreateOneJointTable(db_fields,
                       db_forced_rel,
                       db$con,
                       Verbose = TRUE,
@@ -289,14 +297,14 @@ joint_table_Without_extended_joins <-
 #### 8. Get the 1-Joint-Table with Extended Joins
 ```r
 joint_table_With_extended_joins <-
-  CreateMainJointTables(db_fields,
+  create_main_joint_tables(db_fields,
                         db_forced_rel,
                         db$con,
                         DeselectKeysIfIncludeFalse = FALSE,
                         Verbose = TRUE,
                         get_sql_query = FALSE
                         ) %>%
-  CreateExtendedMainJointTables(db_fields,
+  zinternal_CreateExtendedMainJointTables(db_fields,
                                 db_forced_rel,
                                 db_ColumnsOldNamesToNewNames,
                                 db$con,
@@ -304,7 +312,7 @@ joint_table_With_extended_joins <-
                                 Verbose = TRUE,
                                 get_sql_query = FALSE
                                 ) %>%
-  CreateOneJointTable(db_fields,
+  zinternal_CreateOneJointTable(db_fields,
                       db_forced_rel,
                       db$con,
                       Verbose = TRUE,

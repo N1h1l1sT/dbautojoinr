@@ -40,7 +40,15 @@ db_fields &lt;- initialise_return_db_fields(csv_path = db_fields_path,
                                          Server = &quot;123.456.78.9&quot;,
                                          UID = NULL,
                                          PWD = NULL,
-                                         Trusted_Connection = TRUE#,
+                                         Trusted_Connection = TRUE,
+                                         Port = 1433,
+                                         ForceCreate_csv = FALSE, #If TRUE then even if the db_fields exist, it will be deleted and overwriten by a newly created default db_fields
+                                         ExcludeIdentities = FALSE,
+                                         ExcludeForeignKeys = TRUE,
+                                         Update_DBEnv_DBFields = TRUE, #If TRUE and creating db_fields file, you can have an internal main db_fields accessible via db$db_fields usually acting as the main db_fields. Default is FALSE as having local db_fields variables is the default behaviour.
+                                         ExcludeAuditingFields = FALSE, #If TRUE and creating db_fields file, any SQL Columns ending with &quot;_OrigEntryOn&quot;, &quot;_OrigEntryBy&quot;, &quot;_EntryOn&quot;, &quot;_EntryBy&quot;, &quot;_CompName&quot;, &quot;_Remote&quot; or &quot;_Username&quot; will have INCLUDE == FALSE by default
+                                         ExcludeSYSDIAGRAMS = TRUE, #If TRUE and creating db_fields file, any SQL Columns on the table &quot;sysdiagrams&quot; will have INCLUDE == FALSE by default
+                                         RegexToSelectTables = &quot;^(DIM_|FACT_|TBL_)&quot;#, #A regex that will get tables which you want to be deselected by default. As it is it matches all SQL Tables whose name begins with DIM_, FACT_, or TBL_
                                          #Table1$T1_ForeignKey1 == Table2$T2_ID, #Please notice that Foreign Keys are always
                                          #Table2$T2_ForeignKey1 == Table3$T3_ID, #on the left hand side, whilst IDs are always
                                          #Table4$T4_ForeignKey1 == Table2$T2_ID, #on the right hand side.
@@ -51,7 +59,7 @@ db_fields &lt;- initialise_return_db_fields(csv_path = db_fields_path,
 </code></pre>
 <p>If the db_fields .csv file doesn't exist and it's created or if you set <code>ForceCreate_csv = TRUE</code>, then you may also initialise the db_fields with IDs and FKs selected or excluded using <code>ExcludeIdentities = FALSE</code> and <code>ExcludeForeignKeys = TRUE</code>.</p>
 <h2 id="select-which-sql-columns-you-need">Select which SQL Columns you need</h2>
-<pre><code class="language-r">db_fields &lt;- edit_db_fields(db_fields) #What the user selected is now saved on the db_fields variable (AND on db$db_fields).
+<pre><code class="language-r">db_fields &lt;- edit_db_fields(db_fields, Update_DBEnv_DBFields = TRUE) #What the user selected is now saved on the db_fields variable (AND on db$db_fields because Update_DBEnv_DBFields == TRUE).
 write_db_fields_csv(db_fields, db_fields_path) #For any run on the current session, the user preferences are assumed, but we need to save the file for future runs.
 </code></pre>
 <h1 id="useage">Useage</h1>
@@ -65,12 +73,11 @@ write_db_fields_csv(db_fields, db_fields_path) #For any run on the current sessi
 <h6 id="please-note-that-initialisation-has-to-have-occurred-before-any-code-below-can-be-used"><em>Please note that Initialisation has to have occurred before any code below can be used.</em></h6>
 <h4 id="getting-the-main_joint_tables">Getting the main_joint_tables</h4>
 <pre><code class="language-r">main_joint_tables &lt;-
-  CreateMainJointTables(db_fields = db_fields,
-                        db_forced_rel = NULL, #We don't want to Force any relationships to create a 1-JointTable, so db_forced_rel is NULL
-                        con = db$con,
-                        DeselectKeysIfIncludeFalse = TRUE
-                        )
-
+  create_main_joint_tables(db_fields = db_fields,
+                           db_forced_rel = NULL, #We don't want to Force any relationships to create a 1-JointTable, so db_forced_rel is NULL
+                           con = db$con,
+                           DeselectKeysIfIncludeFalse = TRUE
+                           )
 </code></pre>
 <p>New Arguments:</p>
 <ul>
@@ -91,7 +98,7 @@ db_forced_rel &lt;-
   )
 
 joint_table_Without_extended_joins &lt;-
-  created_joint_table(db_fields = db_fields,
+  create_joint_table(db_fields = db_fields,
                       db_forced_rel = db_forced_rel)
 
 </code></pre>
@@ -194,7 +201,7 @@ Otherwise this parameter can be null <code>db_forced_rel &lt;- NULL</code>.</li>
 </code></pre>
 <h4 id="get-the-main-tables">5. Get the Main Tables</h4>
 <pre><code class="language-r">main_joint_tables &lt;-
-  CreateMainJointTables(db_fields,
+  create_main_joint_tables(db_fields,
                         db_forced_rel,
                         db$con,
                         DeselectKeysIfIncludeFalse = TRUE, #No need to make any other joins, so let's only get what the User selected
@@ -204,14 +211,14 @@ Otherwise this parameter can be null <code>db_forced_rel &lt;- NULL</code>.</li>
 </code></pre>
 <h4 id="get-the-extended-main-tables">6. Get the Extended Main Tables</h4>
 <pre><code class="language-r">extended_main_joint_tables &lt;-
-  CreateMainJointTables(db_fields,
+  create_main_joint_tables(db_fields,
                         db_forced_rel,
                         db$con,
                         DeselectKeysIfIncludeFalse = FALSE,
                         Verbose = TRUE,
                         get_sql_query = FALSE
                         ) %&gt;%
-  CreateExtendedMainJointTables(db_fields,
+  zinternal_CreateExtendedMainJointTables(db_fields,
                                 db_forced_rel,
                                 db_ColumnsOldNamesToNewNames,
                                 db$con,
@@ -221,19 +228,19 @@ Otherwise this parameter can be null <code>db_forced_rel &lt;- NULL</code>.</li>
                                 )
 </code></pre>
 <p>You've probably noticed that instead of using <code>create_extended_main_joint_tables</code> to get the result, we're now using 2 different functions that each performs 1 step.
-The 1st one (<code>CreateMainJointTables</code>) will retrieve the Main Tables, whilst the 2nd (<code>CreateExtendedMainJointTables</code>) does the extended joins (in our case, it joins <code>main_joint_tables[[DIM_Employee]].[MainSite_ID]</code> with <code>[DIM_Site].[Site_ID]</code> )
+The 1st one (<code>create_main_joint_tables</code>) will retrieve the Main Tables, whilst the 2nd (<code>zinternal_CreateExtendedMainJointTables</code>) does the extended joins (in our case, it joins <code>main_joint_tables[[DIM_Employee]].[MainSite_ID]</code> with <code>[DIM_Site].[Site_ID]</code> )
 Now, you might want to proceed with this long way if you want to also make custom transformations to some table before the next joining level occurs.
 <strong>Be careful with DeselectKeysIfIncludeFalse which must always be FALSE prior to the last level and always TRUE at the last one.</strong></p>
 <h4 id="get-the-1-joint-table-no-renaming-or-extended-joins">7. Get the 1-Joint-Table (No renaming or extended joins)</h4>
 <pre><code class="language-r">joint_table_Without_extended_joins &lt;-
-  CreateMainJointTables(db_fields,
+  create_main_joint_tables(db_fields,
                         db_forced_rel,
                         db$con,
                         DeselectKeysIfIncludeFalse = FALSE,
                         Verbose = TRUE,
                         get_sql_query = FALSE
                         ) %&gt;%
-  CreateOneJointTable(db_fields,
+  zinternal_CreateOneJointTable(db_fields,
                       db_forced_rel,
                       db$con,
                       Verbose = TRUE,
@@ -242,14 +249,14 @@ Now, you might want to proceed with this long way if you want to also make custo
 </code></pre>
 <h4 id="get-the-1-joint-table-with-extended-joins">8. Get the 1-Joint-Table with Extended Joins</h4>
 <pre><code class="language-r">joint_table_With_extended_joins &lt;-
-  CreateMainJointTables(db_fields,
+  create_main_joint_tables(db_fields,
                         db_forced_rel,
                         db$con,
                         DeselectKeysIfIncludeFalse = FALSE,
                         Verbose = TRUE,
                         get_sql_query = FALSE
                         ) %&gt;%
-  CreateExtendedMainJointTables(db_fields,
+  zinternal_CreateExtendedMainJointTables(db_fields,
                                 db_forced_rel,
                                 db_ColumnsOldNamesToNewNames,
                                 db$con,
@@ -257,7 +264,7 @@ Now, you might want to proceed with this long way if you want to also make custo
                                 Verbose = TRUE,
                                 get_sql_query = FALSE
                                 ) %&gt;%
-  CreateOneJointTable(db_fields,
+  zinternal_CreateOneJointTable(db_fields,
                       db_forced_rel,
                       db$con,
                       Verbose = TRUE,

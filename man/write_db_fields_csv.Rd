@@ -4,19 +4,21 @@
 \alias{write_db_fields_csv}
 \title{Writes the csv file that is formatted according to the db_fields standard}
 \usage{
-write_db_fields_csv(db_fields, csv_path)
+write_db_fields_csv(db_fields, csv_path, Update_DBEnv_DBFields = FALSE)
 }
 \arguments{
 \item{db_fields}{A DF. A dataframe formatted according to the db_fields standard.}
 
 \item{csv_path}{A String. The path of the db_fields .csv file.}
+
+\item{Update_DBEnv_DBFields}{A Boolean. If set to TRUE, you can have an internal main db_fields accessible via db$db_fields usually acting as the main db_fields. Default is FALSE as having local db_fields variables is the default behaviour.}
 }
 \description{
 Creates a .csv file with columns: KeyType, Table, Column, Type, Comment, RelationshipWithTable, RelationshipWithColumn, Transformation
 }
 \examples{
 Example 1:
-db_fields <- create_default_db_fields_from_db_con(csv_path)
+db_fields <- zinternal_create_default_db_fields_from_db_con(csv_path)
 write_db_fields_csv(db_fields, "db_fields.csv")
 
 Example 2:
