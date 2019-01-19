@@ -5,11 +5,12 @@
 \title{Initialises the Library/Package with a SQL connection and retrieves information so that the exposed functions can work correctly}
 \usage{
 initialise_return_db_fields(csv_path, Driver, Database, Server, UID, PWD,
-  Trusted_Connection, Port, ..., ForceCreate_csv = FALSE,
+  Trusted_Connection, Port = 1433, ..., ForceCreate_csv = FALSE,
   ExcludeIdentities = FALSE, ExcludeForeignKeys = TRUE,
   Update_DBEnv_DBFields = FALSE, ExcludeAuditingFields = FALSE,
   ExcludeSYSDIAGRAMS = TRUE,
-  RegexToSelectTables = "^(DIM_|FACT_|TBL_)")
+  RegexToSelectTables = "^(DIM_|FACT_|TBL_)",
+  UpdateDBFieldsFromDBCon = FALSE, DefaultToExclude = FALSE)
 }
 \arguments{
 \item{csv_path}{A String. The path of the db_fields .csv file to read (or to be created if it doesn't exist)}
@@ -37,6 +38,10 @@ initialise_return_db_fields(csv_path, Driver, Database, Server, UID, PWD,
 \item{ExcludeForeignKeys}{A Boolean. If we need to perform manual joins afterwards or keep a reference as to with which table there's a connection, then we need them; otherwise we can safely exclude them}
 
 \item{Update_DBEnv_DBFields}{A Boolean. If set to TRUE, you can have an internal main db_fields accessible via db$db_fields usually acting as the main db_fields. Default is FALSE as having local db_fields variables is the default behaviour.}
+
+\item{UpdateDBFieldsFromDBCon}{A Boolean. If set to TRUE, then the db_fields saved on the file will be updated to reflect any changes in the SQL Database (removal or addition of Columns and Tables). User options are kept.}
+
+\item{DefaultToExclude}{A Boolean. If TRUE, every non-ID and non-FK column will default to Include == FALSE, unless ExcludeIdentities or ExcludeForeignKeys is set to TRUE}
 
 \item{ExcludeAuditingFields.}{A Boolean. If TRUE, any SQL Columns ending with "_OrigEntryOn", "_OrigEntryBy", "_EntryOn", "_EntryBy", "_CompName", "_Remote" or "_Username" will have INCLUDE == FALSE by default}
 

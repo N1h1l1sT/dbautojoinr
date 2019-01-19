@@ -7,7 +7,7 @@
 zinternal_create_default_db_fields_from_db_con(csv_path = NULL,
   ExcludeIdentities = FALSE, ExcludeForeignKeys = TRUE,
   Update_DBEnv_DBFields = FALSE, ExcludeAuditingFields = FALSE,
-  ExcludeSYSDIAGRAMS = TRUE)
+  ExcludeSYSDIAGRAMS = TRUE, DefaultToExclude = FALSE)
 }
 \arguments{
 \item{csv_path}{A String. The path of the db_fields .csv file.}
@@ -17,6 +17,8 @@ zinternal_create_default_db_fields_from_db_con(csv_path = NULL,
 \item{ExcludeForeignKeys}{A Boolean. If we need to perform manual joins afterwards or keep a reference as to with which table there's a connection, then we need them; otherwise we can safely exclude them}
 
 \item{Update_DBEnv_DBFields}{A Boolean. If set to TRUE, you can have an internal main db_fields accessible via db$db_fields usually acting as the main db_fields. Default is FALSE as having local db_fields variables is the default behaviour.}
+
+\item{DefaultToExclude}{A Boolean. If TRUE, every non-ID and non-FK column will default to Include == FALSE, unless ExcludeIdentities or ExcludeForeignKeys is set to TRUE}
 
 \item{ExcludeAuditingFields.}{A Boolean. If TRUE, any SQL Columns ending with "_OrigEntryOn", "_OrigEntryBy", "_EntryOn", "_EntryBy", "_CompName", "_Remote" or "_Username" will have INCLUDE == FALSE by default}
 

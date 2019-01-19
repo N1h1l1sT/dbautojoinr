@@ -33,6 +33,7 @@ show_ER_diagramme <- function(DataModel = db$dm_f, GraphDirection = "RL") {
 #' @param ExcludeSYSDIAGRAMS. A Boolean. If TRUE, any SQL Columns on the table "sysdiagrams" will have INCLUDE == FALSE by default
 #' @param RegexToSelectTables. A String. It defaults to getting all SQL Tables whose name begins with DIM_, FACT_, or TBL_.
 #' @param UpdateDBFieldsFromDBCon A Boolean. If set to TRUE, then the db_fields saved on the file will be updated to reflect any changes in the SQL Database (removal or addition of Columns and Tables). User options are kept.
+#' @param DefaultToExclude A Boolean. If TRUE, every non-ID and non-FK column will default to Include == FALSE, unless ExcludeIdentities or ExcludeForeignKeys is set to TRUE
 #' @keywords create db_fields dbfields
 #' @export
 #' @examples
@@ -52,7 +53,8 @@ show_ER_diagramme <- function(DataModel = db$dm_f, GraphDirection = "RL") {
 #'                                          )
 initialise_return_db_fields <- function(csv_path, Driver, Database, Server, UID, PWD, Trusted_Connection, Port = 1433, ...,
                                         ForceCreate_csv = FALSE, ExcludeIdentities = FALSE, ExcludeForeignKeys = TRUE, Update_DBEnv_DBFields = FALSE,
-                                        ExcludeAuditingFields = FALSE, ExcludeSYSDIAGRAMS = TRUE, RegexToSelectTables = "^(DIM_|FACT_|TBL_)", UpdateDBFieldsFromDBCon = FALSE) {
+                                        ExcludeAuditingFields = FALSE, ExcludeSYSDIAGRAMS = TRUE, RegexToSelectTables = "^(DIM_|FACT_|TBL_)",
+                                        UpdateDBFieldsFromDBCon = FALSE, DefaultToExclude = FALSE) {
   .GlobalEnv$db <- new.env()
   zinternal_update_db_info(Driver, Database, Server, UID, PWD, Trusted_Connection, Port, ..., RegexToSelectTables = RegexToSelectTables)
 
@@ -62,7 +64,7 @@ initialise_return_db_fields <- function(csv_path, Driver, Database, Server, UID,
   } else {
     cat(paste0("\n'", csv_path, "' does not exist.\nCalling zinternal_create_default_db_fields_from_db_con()\n"))
     db_fields <- zinternal_create_default_db_fields_from_db_con(csv_path, ExcludeIdentities, ExcludeForeignKeys,
-                                                                Update_DBEnv_DBFields = FALSE, ExcludeAuditingFields, ExcludeSYSDIAGRAMS)
+                                                                Update_DBEnv_DBFields = FALSE, ExcludeAuditingFields, ExcludeSYSDIAGRAMS, DefaultToExclude)
   }
 
   if (Update_DBEnv_DBFields == TRUE) db$db_fields <- db_fields
@@ -259,11 +261,12 @@ zinternal_connect_odbc <- function(Driver, Database, Server, UID, PWD, Trusted_C
 #' @param Update_DBEnv_DBFields A Boolean. If set to TRUE, you can have an internal main db_fields accessible via db$db_fields usually acting as the main db_fields. Default is FALSE as having local db_fields variables is the default behaviour.
 #' @param ExcludeAuditingFields. A Boolean. If TRUE, any SQL Columns ending with "_OrigEntryOn", "_OrigEntryBy", "_EntryOn", "_EntryBy", "_CompName", "_Remote" or "_Username" will have INCLUDE == FALSE by default
 #' @param ExcludeSYSDIAGRAMS. A Boolean. If TRUE, any SQL Columns on the table "sysdiagrams" will have INCLUDE == FALSE by default
+#' @param DefaultToExclude A Boolean. If TRUE, every non-ID and non-FK column will default to Include == FALSE, unless ExcludeIdentities or ExcludeForeignKeys is set to TRUE
 #' @keywords create db_fields dbfields
 #' @export
 #' @examples
 #' db_fields <- zinternal_create_default_db_fields_from_db_con("db_fields.csv")
-zinternal_create_default_db_fields_from_db_con <- function(csv_path = NULL, ExcludeIdentities = FALSE, ExcludeForeignKeys = TRUE, Update_DBEnv_DBFields = FALSE, ExcludeAuditingFields = FALSE, ExcludeSYSDIAGRAMS = TRUE) {
+zinternal_create_default_db_fields_from_db_con <- function(csv_path = NULL, ExcludeIdentities = FALSE, ExcludeForeignKeys = TRUE, Update_DBEnv_DBFields = FALSE, ExcludeAuditingFields = FALSE, ExcludeSYSDIAGRAMS = TRUE, DefaultToExclude = FALSE) {
   ############################################## IDENTITY is more important because multiple ForeignKeys might reference it, whilst ForeignKeys themselves are not relevant after the merge
   ### Creating a Feature Selection Interface ###
   ##############################################
@@ -272,13 +275,13 @@ zinternal_create_default_db_fields_from_db_con <- function(csv_path = NULL, Excl
   #Setting Default Values:
   SelectionOptions <- c("Yes", "No", "N/A")
   if (ExcludeIdentities && ExcludeForeignKeys) {
-    Include <- if_else(db$db_all_is_ident, SelectionOptions[2], if_else(!is.na(db$db_all_rel_cols), SelectionOptions[2], SelectionOptions[1], SelectionOptions[3]), SelectionOptions[3])
+    Include <- if_else(db$db_all_is_ident | db$db_all_rel_cols, SelectionOptions[2], if_else(!DefaultToExclude, SelectionOptions[1], SelectionOptions[2], SelectionOptions[3]), SelectionOptions[3])
   } else if (ExcludeForeignKeys) {
-    Include <- if_else(!is.na(db$db_all_rel_cols), SelectionOptions[2], SelectionOptions[1], SelectionOptions[3])
+    Include <- if_else(!is.na(db$db_all_rel_cols), SelectionOptions[2], if_else(!DefaultToExclude, SelectionOptions[1], SelectionOptions[2], SelectionOptions[3]), SelectionOptions[3])
   } else if (ExcludeIdentities) {
-    Include <- if_else(db$db_all_is_ident, SelectionOptions[2], SelectionOptions[1], SelectionOptions[3])
+    Include <- if_else(db$db_all_is_ident, SelectionOptions[2], if_else(!DefaultToExclude, SelectionOptions[1], SelectionOptions[2], SelectionOptions[3]), SelectionOptions[3])
   } else {
-    Include <- rep(SelectionOptions[2], NROW(db$db_all_is_ident))
+    Include <- if_else(db$db_all_is_ident | db$db_all_rel_cols, SelectionOptions[1], if_else(!DefaultToExclude, SelectionOptions[1], SelectionOptions[2], SelectionOptions[3]), SelectionOptions[3])
   }
   if (ExcludeAuditingFields == TRUE) {
     Include[db$db_all_cols %>% endsWith("_OrigEntryOn") |
@@ -343,7 +346,8 @@ update_db_fields_from_db_con <- function(csv_path, csv_output = NULL, ExcludeIde
 
   NewFieldsAlone <- NewDBFields %>% mutate(Fields = paste(Table, Column, sep = "__")) %>% pull(Fields)
   OldFieldsAlone <- OldDBFields %>% mutate(Fields = paste(Table, Column, sep = "__")) %>% pull(Fields)
-  INDX <- NewFieldsAlone %in% OldFieldsAlone %>% which
+  INDX <- (NewFieldsAlone %in% OldFieldsAlone & NewDBFields$Include != "N/A" ) %>% which
+
   for (i in INDX) {
     NewDBFields$Include[[i]] <- OldDBFields %>% filter(Table == NewDBFields$Table[[i]] & Column == NewDBFields$Column[[i]]) %>% pull(Include)
     NewDBFields$Transformation[[i]] <- OldDBFields %>% filter(Table == NewDBFields$Table[[i]] & Column == NewDBFields$Column[[i]]) %>% pull(Transformation)
