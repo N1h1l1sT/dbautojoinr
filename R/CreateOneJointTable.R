@@ -156,7 +156,7 @@ zinternal_CreateOneJointTable <- function(main_joint_tables, db_fields, db_force
           unique() %>%
           {colnames(joint_table)[colnames(joint_table) %in% .]}
 
-        if (NROW(colnames(joint_table)) != NROW(included_cols) || any(colnames(joint_table) != included_cols)) {
+        if (NROW(colnames(joint_table)) != NROW(included_cols) || !all(colnames(joint_table) %in% included_cols)) {
           joint_table %<>%
             select(one_of(!!(included_cols)))
         }

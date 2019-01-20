@@ -194,7 +194,7 @@ zinternal_CreateExtendedMainJointTables <- function(main_joint_tables, db_fields
           db$NeededRenamedColNames[db$NeededRenamedColNames %in% colnames(main_joint_tables[[TableNames[[i]]]])]
         ) %>% unique()
 
-      if (NROW(colnames(main_joint_tables[[TableNames[[i]]]])) != NROW(included_cols) || any(colnames(main_joint_tables[[TableNames[[i]]]]) != included_cols)) {
+      if (NROW(colnames(main_joint_tables[[TableNames[[i]]]])) != NROW(included_cols) || !all(colnames(main_joint_tables[[TableNames[[i]]]]) %in% included_cols)) {
         main_joint_tables[[TableNames[[i]]]] %<>%
           select(one_of(!!(included_cols)))
       }
