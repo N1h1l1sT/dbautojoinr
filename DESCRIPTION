@@ -12,7 +12,7 @@ License: Read the License file
 Encoding: UTF-8
 LazyData: true
 Depends:
-	R (>= 3.4.4),
+	R (>= 3.2.0),
 	odbc (>= 1.1.6),
 	DiagrammeR (>= 1.0.0),
 	DBI (>= 1.0.0),
