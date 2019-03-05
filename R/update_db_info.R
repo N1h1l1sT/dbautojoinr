@@ -94,6 +94,7 @@ initialise_return_db_fields <- function(csv_path, Driver, Database, Server, UID,
 zinternal_update_db_info <- function(Driver, Database, Server, UID, PWD, Trusted_Connection, Port = 1433, ...,
                                      ReadRelationshipsFromDB = TRUE, AddUserRelationships = TRUE, RegexToSelectTables = "^(DIM_|FACT_|TBL_)") {
   db$con <- zinternal_connect_odbc(Driver, Database, Server, UID, PWD, Trusted_Connection, Port)
+  #Driver = "SQL Server Native Client 11.0"
   #odbcClose(db$con)
 
   #Retrieving the names of all the tables starting with DIM or FACT
@@ -275,13 +276,13 @@ zinternal_create_default_db_fields_from_db_con <- function(csv_path = NULL, Excl
   #Setting Default Values:
   SelectionOptions <- c("Yes", "No", "N/A")
   if (ExcludeIdentities && ExcludeForeignKeys) {
-    Include <- if_else(db$db_all_is_ident | db$db_all_rel_cols, SelectionOptions[2], if_else(!DefaultToExclude, SelectionOptions[1], SelectionOptions[2], SelectionOptions[3]), SelectionOptions[3])
+    Include <- if_else(db$db_all_is_ident | !is.na(db$db_all_rel_cols), SelectionOptions[2], if_else(!DefaultToExclude, SelectionOptions[1], SelectionOptions[2], SelectionOptions[3]), SelectionOptions[3])
   } else if (ExcludeForeignKeys) {
     Include <- if_else(!is.na(db$db_all_rel_cols), SelectionOptions[2], if_else(!DefaultToExclude, SelectionOptions[1], SelectionOptions[2], SelectionOptions[3]), SelectionOptions[3])
   } else if (ExcludeIdentities) {
     Include <- if_else(db$db_all_is_ident, SelectionOptions[2], if_else(!DefaultToExclude, SelectionOptions[1], SelectionOptions[2], SelectionOptions[3]), SelectionOptions[3])
   } else {
-    Include <- if_else(db$db_all_is_ident | db$db_all_rel_cols, SelectionOptions[1], if_else(!DefaultToExclude, SelectionOptions[1], SelectionOptions[2], SelectionOptions[3]), SelectionOptions[3])
+    Include <- if_else(db$db_all_is_ident | !is.na(db$db_all_rel_cols), SelectionOptions[1], if_else(!DefaultToExclude, SelectionOptions[1], SelectionOptions[2], SelectionOptions[3]), SelectionOptions[3])
   }
   if (ExcludeAuditingFields == TRUE) {
     Include[db$db_all_cols %>% endsWith("_OrigEntryOn") |
