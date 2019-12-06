@@ -246,10 +246,17 @@ dbplyr_to_sql <- function(TibbleDbPointer, con = db$con) {
 #' @examples
 #' zinternal_connect_odbc(Driver = "{SQL Server};", Database = "Chronogramme", Server = '123.456.7.8', UID = NULL, PWD = NULL, Trusted_Connection = TRUE, Port = 1433)
 zinternal_connect_odbc <- function(Driver, Database, Server, UID, PWD, Trusted_Connection, Port = 1433) {
+  library(odbc)
   if (is.not.null(Trusted_Connection) && !Trusted_Connection) Trusted_Connection <- NULL
+  if (!is.null(Trusted_Connection) && Trusted_Connection) {
     con <- DBI::dbConnect(odbc::odbc(), Driver = Driver,
                           Database = Database, Server = Server, UID = UID,
-                          PWD = PWD, trusted_connection = Trusted_Connection, Port = Port)
+                          PWD = PWD, trusted_connection = TRUE, Port = Port)
+  } else {
+    con <- DBI::dbConnect(odbc::odbc(), Driver = Driver,
+                          Database = Database, Server = Server, UID = UID,
+                          PWD = PWD, Port = Port)
+  }
   return(con)
 }
 
