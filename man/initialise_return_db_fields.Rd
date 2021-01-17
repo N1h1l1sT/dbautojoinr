@@ -4,13 +4,26 @@
 \alias{initialise_return_db_fields}
 \title{Initialises the Library/Package with a SQL connection and retrieves information so that the exposed functions can work correctly}
 \usage{
-initialise_return_db_fields(csv_path, Driver, Database, Server, UID, PWD,
-  Trusted_Connection, Port = 1433, ..., ForceCreate_csv = FALSE,
-  ExcludeIdentities = FALSE, ExcludeForeignKeys = TRUE,
-  Update_DBEnv_DBFields = FALSE, ExcludeAuditingFields = FALSE,
+initialise_return_db_fields(
+  csv_path,
+  Driver,
+  Database,
+  Server,
+  UID,
+  PWD,
+  Trusted_Connection,
+  Port = 1433,
+  ...,
+  ForceCreate_csv = FALSE,
+  ExcludeIdentities = FALSE,
+  ExcludeForeignKeys = TRUE,
+  Update_DBEnv_DBFields = FALSE,
+  ExcludeAuditingFields = FALSE,
   ExcludeSYSDIAGRAMS = TRUE,
   RegexToSelectTables = "^(DIM_|FACT_|TBL_)",
-  UpdateDBFieldsFromDBCon = FALSE, DefaultToExclude = FALSE)
+  UpdateDBFieldsFromDBCon = FALSE,
+  DefaultToExclude = FALSE
+)
 }
 \arguments{
 \item{csv_path}{A String. The path of the db_fields .csv file to read (or to be created if it doesn't exist)}
@@ -25,7 +38,7 @@ initialise_return_db_fields(csv_path, Driver, Database, Server, UID, PWD,
 
 \item{PWD}{A string. The Password credential for the SQL Connection. NULL if Windows Login is to be used}
 
-\item{Trusted_Connection}{A Boolean. TRUE or FALSE on whether Windows Login is to be used}
+\item{Trusted_Connection}{A Boolean. TRUE or FALSE on whether Windows Login is to be used, if a string is used it'll be passed as is.}
 
 \item{Port}{An Integer. The Port which the SQL Listener is listening at}
 

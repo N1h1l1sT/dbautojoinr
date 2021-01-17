@@ -4,10 +4,15 @@
 \alias{update_db_fields_from_db_con}
 \title{Updates the db_fields to the newest SQL Schema, keeping your previous selected Includes, after Fields or whole Tables have been added or deleted.}
 \usage{
-update_db_fields_from_db_con(csv_path, csv_output = NULL,
-  ExcludeIdentities = FALSE, ExcludeForeignKeys = TRUE,
-  Update_DBEnv_DBFields = FALSE, ExcludeAuditingFields = FALSE,
-  ExcludeSYSDIAGRAMS = TRUE)
+update_db_fields_from_db_con(
+  csv_path,
+  csv_output = NULL,
+  ExcludeIdentities = FALSE,
+  ExcludeForeignKeys = TRUE,
+  Update_DBEnv_DBFields = FALSE,
+  ExcludeAuditingFields = FALSE,
+  ExcludeSYSDIAGRAMS = TRUE
+)
 }
 \arguments{
 \item{csv_path}{A String. The path of the db_fields .csv file.}

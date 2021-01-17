@@ -4,9 +4,14 @@
 \alias{create_main_joint_tables}
 \title{Create Main Joint Tables}
 \usage{
-create_main_joint_tables(db_fields, db_forced_rel, con = db$con,
-  DeselectKeysIfIncludeFalse = TRUE, Verbose = TRUE,
-  get_sql_query = TRUE)
+create_main_joint_tables(
+  db_fields,
+  db_forced_rel,
+  con = db$con,
+  DeselectKeysIfIncludeFalse = TRUE,
+  Verbose = TRUE,
+  get_sql_query = TRUE
+)
 }
 \arguments{
 \item{db_fields}{A DF with columns: "Include, KeyType, Table, Column, Type, RelationshipWithTable, RelationshipWithColumn, Transformation, Comment" about the User Selected fields and Relationships}

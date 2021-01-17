@@ -22,7 +22,7 @@ show_ER_diagramme <- function(DataModel = db$dm_f, GraphDirection = "RL") {
 #' @param Server A string. A name that resolves into the SQL Machine, or the IP to the SQL Machine
 #' @param UID A string. The Username credential for the SQL Connection. NULL if Windows Login is to be used
 #' @param PWD A string. The Password credential for the SQL Connection. NULL if Windows Login is to be used
-#' @param Trusted_Connection A Boolean. TRUE or FALSE on whether Windows Login is to be used
+#' @param Trusted_Connection A Boolean. TRUE or FALSE on whether Windows Login is to be used, if a string is used it'll be passed as is.
 #' @param Port An Integer. The Port which the SQL Listener is listening at
 #' @param ... If the relationships exist on the SQL Database, this can be left blank. Logical expressions for the SQL Relationships in the format: table1$FKcolumn1 == table2$IDcolumn5, table1$FKcolumn2 == table3$IDcolumn5, ...
 #' @param ForceCreate_csv A Boolean. If TRUE then even if the db_fields exist, it will be deleted and overwriten by a newly created default db_fields
@@ -78,7 +78,7 @@ initialise_return_db_fields <- function(csv_path, Driver, Database, Server, UID,
 #' @param Server A string. A name that resolves into the SQL Machine, or the IP to the SQL Machine
 #' @param UID A string. The Username credential for the SQL Connection. NULL if Windows Login is to be used
 #' @param PWD A string. The Password credential for the SQL Connection. NULL if Windows Login is to be used
-#' @param Trusted_Connection A Boolean. TRUE or FALSE on whether Windows Login/Credentials are to be used
+#' @param Trusted_Connection A Boolean. TRUE or FALSE on whether Windows Login/Credentials are to be used, if a string is used it'll be passed as is.
 #' @param Port An Integer. The Port which the SQL Listener is listening at. Can be left blank whereupon it will default to 1433
 #' @param ... If the relationships exist on the SQL Database, this can be left blank. Logical expressions for the SQL Relationships in the format: table1$FKcolumn2 == table2$IDcolumn1, table1$FKcolumn3 == table3$IDcolumn1, ...
 #' @param ReadRelationshipsFromDB. A Boolean. If TRUE an attempt to read the SQL Tables relationships from the Database will occur. User-defined relationships can also be added afterwards
@@ -239,7 +239,7 @@ dbplyr_to_sql <- function(TibbleDbPointer, con = db$con) {
 #' @param Server A string. A name that resolves into the SQL Machine, or the IP to the SQL Machine
 #' @param UID A string. The Username credential for the SQL Connection. NULL if Windows Login is to be used
 #' @param PWD A string. The Password credential for the SQL Connection. NULL if Windows Login is to be used
-#' @param Trusted_Connection A Boolean. TRUE or FALSE on whether Windows Login/Credentials are to be used instead of a UID/PWD
+#' @param Trusted_Connection A Boolean. TRUE or FALSE on whether Windows Login/Credentials are to be used instead of a UID/PWD, if a string is used it'll be passed as is.
 #' @param Port An Integer. The Port which the SQL Listener is listening at. Can be left blank whereupon it will default to 1433
 #' @keywords ODBC SQL Connection
 #' @export
@@ -248,15 +248,24 @@ dbplyr_to_sql <- function(TibbleDbPointer, con = db$con) {
 zinternal_connect_odbc <- function(Driver, Database, Server, UID, PWD, Trusted_Connection, Port = 1433) {
   library(odbc)
   if (is.not.null(Trusted_Connection) && !Trusted_Connection) Trusted_Connection <- NULL
-  if (!is.null(Trusted_Connection) && Trusted_Connection) {
+  
+  if (!is.null(Trusted_Connection) && !is.logical(Trusted_Connection)) {
     con <- DBI::dbConnect(odbc::odbc(), Driver = Driver,
                           Database = Database, Server = Server, UID = UID,
-                          PWD = PWD, trusted_connection = TRUE, Port = Port)
-  } else {
-    con <- DBI::dbConnect(odbc::odbc(), Driver = Driver,
-                          Database = Database, Server = Server, UID = UID,
-                          PWD = PWD, Port = Port)
+                          PWD = PWD, trusted_connection = Trusted_Connection, Port = Port)
   }
+  else {
+    if (!is.null(Trusted_Connection) && Trusted_Connection) {
+      con <- DBI::dbConnect(odbc::odbc(), Driver = Driver,
+                            Database = Database, Server = Server, UID = UID,
+                            PWD = PWD, trusted_connection = TRUE, Port = Port)
+    } else {
+      con <- DBI::dbConnect(odbc::odbc(), Driver = Driver,
+                            Database = Database, Server = Server, UID = UID,
+                            PWD = PWD, Port = Port)
+    }
+  }
+
   return(con)
 }
 

@@ -4,10 +4,15 @@
 \alias{read_db_fields_csv}
 \title{Reads the csv file that is formatted according to the db_fields standard}
 \usage{
-read_db_fields_csv(csv_path, Update_DBEnv_DBFields = FALSE,
-  UpdateDBFieldsFromDBCon = FALSE, ExcludeIdentities = FALSE,
-  ExcludeForeignKeys = TRUE, ExcludeAuditingFields = FALSE,
-  ExcludeSYSDIAGRAMS = TRUE)
+read_db_fields_csv(
+  csv_path,
+  Update_DBEnv_DBFields = FALSE,
+  UpdateDBFieldsFromDBCon = FALSE,
+  ExcludeIdentities = FALSE,
+  ExcludeForeignKeys = TRUE,
+  ExcludeAuditingFields = FALSE,
+  ExcludeSYSDIAGRAMS = TRUE
+)
 }
 \arguments{
 \item{csv_path}{A String. The path of the db_fields .csv file.}

@@ -4,10 +4,15 @@
 \alias{zinternal_create_default_db_fields_from_db_con}
 \title{Creates a db_fields .csv file according to the db_fields standard and according to what the SQL database looks like}
 \usage{
-zinternal_create_default_db_fields_from_db_con(csv_path = NULL,
-  ExcludeIdentities = FALSE, ExcludeForeignKeys = TRUE,
-  Update_DBEnv_DBFields = FALSE, ExcludeAuditingFields = FALSE,
-  ExcludeSYSDIAGRAMS = TRUE, DefaultToExclude = FALSE)
+zinternal_create_default_db_fields_from_db_con(
+  csv_path = NULL,
+  ExcludeIdentities = FALSE,
+  ExcludeForeignKeys = TRUE,
+  Update_DBEnv_DBFields = FALSE,
+  ExcludeAuditingFields = FALSE,
+  ExcludeSYSDIAGRAMS = TRUE,
+  DefaultToExclude = FALSE
+)
 }
 \arguments{
 \item{csv_path}{A String. The path of the db_fields .csv file.}

@@ -4,10 +4,16 @@
 \alias{zinternal_CreateExtendedMainJointTables}
 \title{Create Extended Main Joint Tables}
 \usage{
-zinternal_CreateExtendedMainJointTables(main_joint_tables, db_fields,
-  db_forced_rel, db_ColumnsOldNamesToNewNames, con = db$con,
-  DeselectKeysIfIncludeFalse = TRUE, Verbose = TRUE,
-  get_sql_query = TRUE)
+zinternal_CreateExtendedMainJointTables(
+  main_joint_tables,
+  db_fields,
+  db_forced_rel,
+  db_ColumnsOldNamesToNewNames,
+  con = db$con,
+  DeselectKeysIfIncludeFalse = TRUE,
+  Verbose = TRUE,
+  get_sql_query = TRUE
+)
 }
 \arguments{
 \item{main_joint_tables}{A named list of tibbles/DFs (usually given by create_main_joint_tables() as a SQL DB Pointer containing all user-selected fields plus needed ones for joins}

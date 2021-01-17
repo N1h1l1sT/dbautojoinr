@@ -4,8 +4,15 @@
 \alias{zinternal_connect_odbc}
 \title{Creates an ODBC Connection}
 \usage{
-zinternal_connect_odbc(Driver, Database, Server, UID, PWD,
-  Trusted_Connection, Port = 1433)
+zinternal_connect_odbc(
+  Driver,
+  Database,
+  Server,
+  UID,
+  PWD,
+  Trusted_Connection,
+  Port = 1433
+)
 }
 \arguments{
 \item{Driver}{A string. A SQL Driver for SQL Server, Postgre, etc., e.g.: "{SQL Server};"}
@@ -18,7 +25,7 @@ zinternal_connect_odbc(Driver, Database, Server, UID, PWD,
 
 \item{PWD}{A string. The Password credential for the SQL Connection. NULL if Windows Login is to be used}
 
-\item{Trusted_Connection}{A Boolean. TRUE or FALSE on whether Windows Login/Credentials are to be used instead of a UID/PWD}
+\item{Trusted_Connection}{A Boolean. TRUE or FALSE on whether Windows Login/Credentials are to be used instead of a UID/PWD, if a string is used it'll be passed as is.}
 
 \item{Port}{An Integer. The Port which the SQL Listener is listening at. Can be left blank whereupon it will default to 1433}
 }

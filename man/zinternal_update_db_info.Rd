@@ -4,10 +4,19 @@
 \alias{zinternal_update_db_info}
 \title{Creates the db Environment and the SQL Connection (db$con)}
 \usage{
-zinternal_update_db_info(Driver, Database, Server, UID, PWD,
-  Trusted_Connection, Port = 1433, ..., ReadRelationshipsFromDB = TRUE,
+zinternal_update_db_info(
+  Driver,
+  Database,
+  Server,
+  UID,
+  PWD,
+  Trusted_Connection,
+  Port = 1433,
+  ...,
+  ReadRelationshipsFromDB = TRUE,
   AddUserRelationships = TRUE,
-  RegexToSelectTables = "^(DIM_|FACT_|TBL_)")
+  RegexToSelectTables = "^(DIM_|FACT_|TBL_)"
+)
 }
 \arguments{
 \item{Driver}{A string. A SQL Driver, etc.: {SQL Server};}
@@ -20,7 +29,7 @@ zinternal_update_db_info(Driver, Database, Server, UID, PWD,
 
 \item{PWD}{A string. The Password credential for the SQL Connection. NULL if Windows Login is to be used}
 
-\item{Trusted_Connection}{A Boolean. TRUE or FALSE on whether Windows Login/Credentials are to be used}
+\item{Trusted_Connection}{A Boolean. TRUE or FALSE on whether Windows Login/Credentials are to be used, if a string is used it'll be passed as is.}
 
 \item{Port}{An Integer. The Port which the SQL Listener is listening at. Can be left blank whereupon it will default to 1433}
 
